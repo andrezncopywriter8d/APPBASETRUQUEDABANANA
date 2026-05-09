@@ -1,4 +1,4 @@
-import { Activity, Brain, CalendarCheck, Clock, Moon, RadioTower, Sparkles, Volume2 } from "lucide-react";
+import { Activity, CalendarCheck, Droplets, Ruler, Scale, Sparkles } from "lucide-react";
 import { lastNDays, metricsFromState, dayNumber, type OndaTeslaState } from "../state/ondaTeslaState";
 import { milestones } from "../data/protocolData";
 
@@ -17,39 +17,35 @@ export function ProgressScreen({ active, state }: ProgressScreenProps) {
   return (
     <section className={`screen neuro-screen ${active ? "active" : ""}`}>
       <header className="neuro-heading">
-        <span className="protocol-eyebrow"><Activity size={14} /> Progreso</span>
-        <h1>Progreso de 90 días</h1>
-        <p>Números reales de tu protocolo local. Sin datos falsos.</p>
+        <span className="protocol-eyebrow"><Activity size={14} /> Progresso</span>
+        <h1>Sua evolução visual</h1>
+        <p>Veja progresso em peso, cintura, água, inchaço, disposição e constância.</p>
       </header>
 
       {!hasData ? (
         <div className="empty-state">
-          <strong>Completa tu primera sesión para iniciar tu historial.</strong>
-          <p>Después del check-in, zumbido, claridad, calma y sueño aparecen aquí.</p>
+          <strong>Complete seu primeiro check-in para iniciar seu histórico.</strong>
+          <p>O app mostra evolução mesmo antes do peso mudar: menos inchaço, mais água e mais constância.</p>
         </div>
       ) : null}
 
       <div className="progress-hero neuro-progress-main">
         <div>
-          <span className="kicker">Día {journeyDay}</span>
-          <h2>{metrics.weeklyConsistency}/7 días</h2>
-          <p>{next ? `Próximo hito: Día ${next.day} - ${next.title}` : "Jornada completa registrada."}</p>
+          <span className="kicker">Dia {journeyDay} de 21</span>
+          <h2>{Math.round((Math.min(journeyDay, 21) / 21) * 100)}%</h2>
+          <p>{next ? `Próximo marco: Dia ${next.day} - ${next.title}` : "Ciclo de 21 dias completo."}</p>
         </div>
-        <div className="progress-ring">
-          <strong>{Math.round((metrics.weeklyConsistency / 7) * 100)}%</strong>
-        </div>
+        <div className="progress-ring"><strong>{metrics.currentStreak}d</strong></div>
       </div>
 
       <div className="metric-grid compact-metrics">
         {[
-          { label: "zumbido medio", value: fmt(metrics.averageTinnitusScore), detail: "escala 0-10", Icon: Volume2 },
-          { label: "claridad", value: fmt(metrics.averageClarityScore), detail: "promedio de check-ins", Icon: Brain },
-          { label: "sueño", value: fmt(metrics.averageSleepScore), detail: "cuando se registra", Icon: Moon },
-          { label: "calma", value: fmt(metrics.averageCalmScore), detail: "pos-sesión", Icon: Activity },
-          { label: "sesiones", value: String(metrics.totalSessions), detail: "completadas", Icon: RadioTower },
-          { label: "minutos", value: String(metrics.totalMinutes), detail: "total", Icon: Clock },
-          { label: "días seguidos", value: String(metrics.currentStreak), detail: "racha actual", Icon: CalendarCheck },
-          { label: "spikes", value: String(metrics.emergencyUses), detail: "emergencias", Icon: Sparkles }
+          { label: "peso inicial", value: kg(metrics.initialWeight), detail: "primeiro registro", Icon: Scale },
+          { label: "peso atual", value: kg(metrics.currentWeight), detail: diff(metrics.weightDiff, "kg"), Icon: Scale },
+          { label: "cintura", value: cm(metrics.currentWaist), detail: diff(metrics.waistDiff, "cm"), Icon: Ruler },
+          { label: "água média", value: fmt(metrics.waterAverage), detail: "copos por check-in", Icon: Droplets },
+          { label: "check-ins", value: String(state.checkIns.length), detail: "salvos", Icon: CalendarCheck },
+          { label: "sequência", value: `${metrics.currentStreak}d`, detail: "dias seguidos", Icon: Sparkles }
         ].map(({ label, value, detail, Icon }) => (
           <article className="metric-card large" key={label}>
             <span className="metric-icon"><Icon size={22} /></span>
@@ -59,26 +55,21 @@ export function ProgressScreen({ active, state }: ProgressScreenProps) {
       </div>
 
       <section className="timeline-90">
-        <h2>Jornada de 90 días</h2>
-        <p>{next ? `Próximo hito: Día ${next.day} - ${next.title}` : "Todos los hitos principales están desbloqueados."}</p>
+        <h2>Plano de 21 dias</h2>
+        <p>{next ? `Próximo marco: Dia ${next.day} - ${next.description}` : "Relatório final liberado."}</p>
         <div>
           {milestones.map((item) => (
             <span className={journeyDay >= item.day ? "done" : item.day === next?.day ? "active" : "locked"} key={item.day}>
-              Día {item.day}
+              Dia {item.day}
             </span>
           ))}
         </div>
       </section>
 
-      <Trend title="Zumbido 7 días" data={trend.tinnitus} />
-      <Trend title="Claridad 7 días" data={trend.clarity} />
-      <Trend title="Minutos 7 días" data={trend.minutes} />
-      <section className="protocol-routine-card">
-        <div className="protocol-routine-row">
-          <span><CheckIcon /></span>
-          <div><strong>Audio más usado</strong><p>{metrics.mostUsedAudio}</p></div>
-        </div>
-      </section>
+      <Trend title="Peso 7 dias" data={trend.weight} />
+      <Trend title="Cintura 7 dias" data={trend.waist} />
+      <Trend title="Água 7 dias" data={trend.water} />
+      <Trend title="Vontade de doce 7 dias" data={trend.sweet} />
     </section>
   );
 }
@@ -87,18 +78,27 @@ function fmt(value: number | null) {
   return value === null ? "--" : value.toFixed(1);
 }
 
+function kg(value: number | null) {
+  return value === null ? "--" : `${value}kg`;
+}
+
+function cm(value: number | null) {
+  return value === null ? "--" : `${value}cm`;
+}
+
+function diff(value: number | null, suffix: string) {
+  if (value === null) return "sem comparação";
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}${suffix}`;
+}
+
 function buildTrends(state: OndaTeslaState) {
   const days = lastNDays(7);
   return {
-    tinnitus: days.map((day) => avg(state.checkIns.filter((item) => item.date === day).map((item) => item.tinnitusScore))),
-    clarity: days.map((day) => avg(state.checkIns.filter((item) => item.date === day).map((item) => item.clarityScore))),
-    minutes: days.map((day) => state.sessions.filter((item) => item.date === day).reduce((sum, item) => sum + item.duration, 0))
+    weight: days.map((day) => state.checkIns.find((item) => item.date === day)?.weight ?? 0),
+    waist: days.map((day) => state.checkIns.find((item) => item.date === day)?.waist ?? 0),
+    water: days.map((day) => state.checkIns.find((item) => item.date === day)?.waterCups ?? 0),
+    sweet: days.map((day) => state.checkIns.find((item) => item.date === day)?.sweetCravingScore ?? 0)
   };
-}
-
-function avg(values: readonly number[]) {
-  if (!values.length) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function Trend({ data, title }: { readonly data: readonly number[]; readonly title: string }) {
@@ -111,8 +111,4 @@ function Trend({ data, title }: { readonly data: readonly number[]; readonly tit
       </div>
     </div>
   );
-}
-
-function CheckIcon() {
-  return <RadioTower size={16} />;
 }

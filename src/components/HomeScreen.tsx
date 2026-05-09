@@ -1,7 +1,25 @@
-import { Check, Clock, Headphones, Menu, Settings, ShieldCheck, Volume2, Zap } from "lucide-react";
-import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { audioById, completedToday, dayNumber, getCurrentStreak, metricsFromState, todayKey, type OndaTeslaState } from "../state/ondaTeslaState";
-import { audioLibrary, milestones, routineTemplates, type ProtocolAudio, type ScreenId } from "../data/protocolData";
+import {
+  BarChart3,
+  Calendar,
+  Check,
+  CheckSquare,
+  ChevronRight,
+  Clock,
+  Droplets,
+  Flame,
+  Gift,
+  Heart,
+  Home,
+  ListChecks,
+  Menu,
+  Soup,
+  Sprout,
+  UserRound,
+  Utensils
+} from "lucide-react";
+import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from "react";
+import { audioById, completedToday, dayNumber, metricsFromState, todayKey, type OndaTeslaState } from "../state/ondaTeslaState";
+import { audioLibrary, routineTemplates, type ProtocolAudio, type ScreenId } from "../data/protocolData";
 
 interface HomeScreenProps {
   readonly active: boolean;
@@ -12,160 +30,174 @@ interface HomeScreenProps {
   readonly openSettings: () => void;
 }
 
+const checklist = [
+  { id: "receita", title: "Receita", subtitle: "Preparar a receita personalizada", screen: "player" as ScreenId },
+  { id: "agua", title: "Água", subtitle: "Registrar sua água do dia", screen: "emergency" as ScreenId },
+  { id: "checkin", title: "Check-in", subtitle: "Como seu corpo está hoje?", screen: "emergency" as ScreenId },
+  { id: "dica", title: "Dica do dia", subtitle: "Ver orientação personalizada", screen: "guide" as ScreenId }
+];
+
 export function HomeScreen({ active, state, setState, openAudio, openScreen, openSettings }: HomeScreenProps) {
   const metrics = metricsFromState(state);
-  const journeyDay = dayNumber(state.journeyStartDate);
-  const nextMilestone = milestones.find((item) => item.day > journeyDay) ?? milestones[milestones.length - 1];
-  const mainDone = completedToday(state);
-  const enabledRoutine = routineTemplates.filter((item) => state.routineSettings.enabled[item.id]);
+  const journeyDay = Math.min(dayNumber(state.journeyStartDate), 21);
+  const recipeDone = completedToday(state);
   const doneToday = state.routineCompletions[todayKey()] ?? [];
-  const routineDone = enabledRoutine.filter((item) => doneToday.includes(item.id) || (item.id === "principal" && mainDone)).length;
-  const reminderDue = isReminderDue(state.reminderSettings.dailySessionTime) && !mainDone;
+  const routineDone = routineTemplates.filter((item) => doneToday.includes(item.id) || (item.id === "receita" && recipeDone)).length;
+  const percent = Math.round((routineDone / routineTemplates.length) * 100);
+  const profile = state.userProfile?.profileName || "Ansiedade alimentar + vontade de doce";
+  const firstName = state.userProfile?.name?.split(" ")[0] || "André";
+  const water = Math.round(metrics.waterAverage ?? 0);
 
-  function toggleRoutine(id: string) {
-    setState((current) => ({
-      ...current,
-      routineSettings: {
-        enabled: {
-          ...current.routineSettings.enabled,
-          [id]: !current.routineSettings.enabled[id]
-        }
-      }
-    }));
+  function markDone(id: string) {
+    setState((current) => {
+      const today = todayKey();
+      const list = current.routineCompletions[today] ?? [];
+      if (list.includes(id)) return current;
+      return { ...current, routineCompletions: { ...current.routineCompletions, [today]: [...list, id] } };
+    });
   }
 
   return (
-    <section className={`screen home-protocol ${active ? "active" : ""}`}>
-      <header className="protocol-topbar">
-        <button className="protocol-square-btn" type="button" aria-label="Abrir guía" onClick={() => openScreen("guide")}>
-          <Menu size={20} />
+    <section className={`screen home-protocol banana-home-v2 ${active ? "active" : ""}`}>
+      <header className="banana-home-topbar">
+        <button className="banana-round-btn" type="button" aria-label="Abrir bônus" onClick={() => openScreen("guide")}>
+          <Menu size={24} />
         </button>
-        <div className="protocol-brand">
-          <strong>Onda Tesla</strong>
-          <span>Gamma Protocol</span>
+        <div className="banana-home-brand">
+          <strong><span>🍌</span> Banana App</strong>
+          <small>Plano de 21 dias</small>
         </div>
-        <button className="protocol-profile" type="button" aria-label="Abrir ajustes" onClick={openSettings}>
-          <Settings size={18} />
+        <button className="banana-round-btn" type="button" aria-label="Abrir perfil" onClick={openSettings}>
+          <UserRound size={24} />
         </button>
       </header>
 
-      <section className="protocol-hero">
-        <div className="protocol-eyebrow"><Headphones size={14} /> Hoy</div>
-        <h1>Tu protocolo de hoy</h1>
-        <p>Completa la sesión principal de 9 minutos y registra cómo responde tu zumbido.</p>
-        {state.userProfile ? <span className="profile-chip">Perfil: {state.userProfile.profileName}</span> : null}
+      <section className="banana-home-greeting">
+        <h1>Olá, {firstName}</h1>
+        <p>Dia {journeyDay} de 21. Hoje você só precisa completar o próximo passo.</p>
+        <span><Sprout size={16} /> Perfil: <strong>{profile}</strong></span>
       </section>
 
-      <section className="protocol-session-card">
-        <div className="journey-row">
-          <span>Día {journeyDay} de la jornada</span>
-          <strong>Próximo hito: Día {nextMilestone.day}</strong>
-        </div>
-        <div className="protocol-session-top">
-          <div>
-            <h2>Onda Tesla Principal</h2>
-            <p>{mainDone ? "Sesión principal completada hoy." : "Sesión Gamma diaria para claridad auditiva y silencio mental."}</p>
+      <section className="banana-main-recipe-card">
+        <div className="banana-recipe-content">
+          <div className="banana-recipe-copy">
+            <h2>Sua Receita da Banana Bariátrica de hoje está pronta</h2>
+            <p>Personalizada para o seu perfil e objetivo.</p>
           </div>
-          <div className="protocol-ring">
-            <svg viewBox="0 0 120 120">
-              <circle className="protocol-ring-bg" cx="60" cy="60" r="48" strokeWidth="10" fill="none" />
-              <circle className="protocol-ring-progress" cx="60" cy="60" r="48" strokeWidth="10" fill="none" strokeDasharray="301.59" strokeDashoffset={mainDone ? 0 : 301.59} />
-            </svg>
-            <div className="protocol-ring-center">
-              <strong>{mainDone ? "100%" : "0%"}</strong>
-              <small>Hoy</small>
-            </div>
+
+          <div className="banana-recipe-stats">
+            <MiniStat icon={<Calendar size={20} />} label="Dia" value={String(journeyDay)} />
+            <MiniStat icon={<Clock size={20} />} label="Tempo" value="3 min" />
+            <MiniStat icon={<Check size={20} />} label="Status" value={recipeDone ? "feita" : "liberada"} />
+            <MiniStat icon={<ListChecks size={20} />} label="Progresso" value={`${routineDone}/${routineTemplates.length} etapas`} />
+          </div>
+
+          <button className="banana-hero-cta" type="button" onClick={() => openAudio(audioLibrary[0], { kind: "main" })}>
+            <Soup size={24} />
+            Preparar receita agora
+          </button>
+          <button className="banana-ingredients-link" type="button" onClick={() => openAudio(audioLibrary[0], { kind: "main" })}>
+            Ver ingredientes
+          </button>
+        </div>
+
+        <div className="banana-progress-visual" aria-label={`${percent}% concluído`}>
+          <div className="banana-ring" style={{ "--progress": `${percent * 3.6}deg` } as CSSProperties}>
+            <strong>{percent}%</strong>
+            <span>concluído</span>
+          </div>
+          <div className="banana-shake">
+            <span className="banana-straw" />
+            <span className="banana-glass" />
+            <span className="banana-fruit">🍌</span>
           </div>
         </div>
-        <button className="protocol-primary wide-action" type="button" onClick={() => openAudio(audioLibrary[0], { kind: "main" })}>
-          {mainDone ? "Repetir protocolo de 9 min" : "Iniciar sesión de 9 min"}
-        </button>
-        <div className="protocol-status-strip">
-          <span className="pulse-dot" />
-          <span>{routineDone} de {enabledRoutine.length} etapas completadas. {mainDone ? "Rutina principal al día." : "Sesión principal pendiente."}</span>
-        </div>
-        {reminderDue ? <div className="protocol-status-strip subtle"><Clock size={16} /> Tu sesión de 9 minutos sigue pendiente.</div> : null}
       </section>
 
-      <ProtocolSection title="Rutina Auditiva" action="Ver guía" onAction={() => openScreen("guide")}>
-        <div className="routine-compact">
-          {routineTemplates.map((item) => {
-            const audio = audioById(item.audioId);
-            const enabled = state.routineSettings.enabled[item.id];
-            const done = doneToday.includes(item.id) || (item.id === "principal" && mainDone);
-            return (
-              <div className={`routine-row-mvp ${done ? "done" : ""}`} key={item.id}>
-                <button className="routine-check-btn" type="button" onClick={() => toggleRoutine(item.id)} aria-label={enabled ? "Desactivar rutina" : "Activar rutina"}>
-                  {enabled ? <Check size={16} /> : null}
+      <div className="banana-two-col">
+        <section className="banana-panel">
+          <h3>Seu protocolo de hoje</h3>
+          <div className="banana-timeline">
+            <TimelineItem number="1" icon={<Soup size={23} />} title="Preparar a receita" subtitle="Sua receita personalizada" />
+            <TimelineItem number="2" icon={<Droplets size={24} />} title="Beber água" subtitle="Meta diária: 8 copos" />
+            <TimelineItem number="3" icon={<UserRound size={22} />} title="Fazer check-in do corpo" subtitle="Como você está hoje?" />
+          </div>
+        </section>
+
+        <section className="banana-panel">
+          <h3>Checklist do dia</h3>
+          <div className="banana-checklist">
+            {checklist.map((item) => {
+              const done = doneToday.includes(item.id) || (item.id === "receita" && recipeDone);
+              return (
+                <button className="banana-check-row" type="button" key={item.id} onClick={() => done ? openScreen(item.screen) : markDone(item.id)}>
+                  <span className={done ? "done" : ""}>{done ? <Check size={16} /> : null}</span>
+                  <span><strong>{item.title}</strong><small>{item.subtitle}</small></span>
+                  <ChevronRight size={18} />
                 </button>
-                <div>
-                  <strong>{item.label}</strong>
-                  <p>{audio.name} · {audio.duration} min · {item.goal}</p>
-                </div>
-                <button type="button" onClick={() => openAudio(audio, { kind: "routine", routineId: item.id })}>{done ? "Repetir" : "Iniciar"}</button>
-              </div>
-            );
-          })}
-        </div>
-      </ProtocolSection>
+              );
+            })}
+          </div>
+        </section>
+      </div>
 
-      <ProtocolSection title="Acciones rápidas" action="Emergencia" onAction={() => openScreen("emergency")}>
-        <div className="protocol-quick-list">
-          <QuickRow icon={<Zap size={18} />} title="Spike ahora" subtitle="Flujo calmado para zumbido alto" time="3 min" onClick={() => openScreen("emergency")} />
-          <QuickRow icon={<Volume2 size={18} />} title="Sueño nocturno" subtitle="Preparar una noche más tranquila" time="8 min" onClick={() => openAudio(audioById("paz-noturna"), { kind: "library" })} />
+      <section className="banana-home-section">
+        <h3>Atalhos</h3>
+        <div className="banana-shortcuts">
+          <Shortcut icon={<Soup size={23} />} tone="yellow" title="Receita" subtitle="Sua receita do dia" onClick={() => openAudio(audioLibrary[0], { kind: "main" })} />
+          <Shortcut icon={<Droplets size={23} />} tone="blue" title="Água" subtitle={`${water} copos hoje`} onClick={() => openScreen("emergency")} />
+          <Shortcut icon={<BarChart3 size={23} />} tone="green" title="Progresso" subtitle="Acompanhe sua jornada" onClick={() => openScreen("progress")} />
+          <Shortcut icon={<Gift size={23} />} tone="purple" title="Bônus" subtitle="Conteúdos e benefícios" onClick={() => openScreen("guide")} />
         </div>
-      </ProtocolSection>
+      </section>
 
-      <ProtocolSection title="Señales reales">
-        <div className="signal-strip">
-          <Signal label="Sesiones" value={String(metrics.totalSessions)} />
-          <Signal label="Minutos" value={String(metrics.totalMinutes)} />
-          <Signal label="Racha" value={`${getCurrentStreak(state)}d`} />
+      <section className="banana-home-section">
+        <h3>Microvitórias</h3>
+        <div className="banana-victories">
+          <Victory icon={<Calendar size={18} />} label="Dias" value={`${metrics.totalSessions}/21`} />
+          <Victory icon={<Flame size={18} />} label="Sequência" value={`${metrics.currentStreak}d`} />
+          <Victory icon={<CheckSquare size={18} />} label="Check-ins" value={String(state.checkIns.length)} />
+          <Victory icon={<Droplets size={18} />} label="Água" value={`${water} copos`} />
+          <div className="banana-progress-line"><span style={{ width: `${Math.min(100, (metrics.totalSessions / 21) * 100)}%` }} /></div>
+          <footer><span>Plano de 21 dias</span><strong>{Math.round(Math.min(100, (metrics.totalSessions / 21) * 100))}%</strong></footer>
         </div>
-      </ProtocolSection>
+      </section>
 
-      <section className="trust-card">
-        <ShieldCheck size={18} />
-        <p>Usa un volumen cómodo. La app no sustituye orientación médica.</p>
+      <section className="banana-tip-card">
+        <span><Heart size={30} /></span>
+        <div>
+          <h3>Dica personalizada</h3>
+          <p>Não precisa ser perfeito. Precisa ser feito. Seu check-in ajuda o app a acompanhar sua evolução.</p>
+        </div>
       </section>
     </section>
   );
 }
 
-function isReminderDue(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  const now = new Date();
-  return now.getHours() * 60 + now.getMinutes() >= hours * 60 + minutes;
+function MiniStat({ icon, label, value }: { readonly icon: ReactNode; readonly label: string; readonly value: string }) {
+  return <div className="banana-mini-stat">{icon}<span>{label}</span><strong>{value}</strong></div>;
 }
 
-interface ProtocolSectionProps {
-  readonly action?: string;
-  readonly children: ReactNode;
-  readonly onAction?: () => void;
-  readonly title: string;
-}
-
-function ProtocolSection({ action, children, onAction, title }: ProtocolSectionProps) {
+function TimelineItem({ icon, number, subtitle, title }: { readonly icon: ReactNode; readonly number: string; readonly subtitle: string; readonly title: string }) {
   return (
-    <section className="protocol-section">
-      <div className="protocol-section-head">
-        <h3>{title}</h3>
-        {action ? <button type="button" onClick={onAction}>{action}</button> : null}
-      </div>
-      {children}
-    </section>
+    <div className="banana-timeline-item">
+      <span>{number}</span>
+      <i>{icon}</i>
+      <div><strong>{title}</strong><small>{subtitle}</small></div>
+    </div>
   );
 }
 
-function QuickRow({ icon, onClick, subtitle, time, title }: { readonly icon: ReactNode; readonly onClick: () => void; readonly subtitle: string; readonly time: string; readonly title: string }) {
+function Shortcut({ icon, onClick, subtitle, title, tone }: { readonly icon: ReactNode; readonly onClick: () => void; readonly subtitle: string; readonly title: string; readonly tone: string }) {
   return (
-    <button className="protocol-quick-card" type="button" onClick={onClick}>
-      <span className="protocol-quick-left"><span className="protocol-quick-icon">{icon}</span><span><strong>{title}</strong><small>{subtitle}</small></span></span>
-      <span>{time}</span>
+    <button className="banana-shortcut" type="button" onClick={onClick}>
+      <span className={tone}>{icon}</span>
+      <span><strong>{title}</strong><small>{subtitle}</small></span>
+      <ChevronRight size={20} />
     </button>
   );
 }
 
-function Signal({ label, value }: { readonly label: string; readonly value: string }) {
-  return <div><span>{label}</span><strong>{value}</strong></div>;
+function Victory({ icon, label, value }: { readonly icon: ReactNode; readonly label: string; readonly value: string }) {
+  return <div className="banana-victory">{icon}<span>{label}</span><strong>{value}</strong></div>;
 }

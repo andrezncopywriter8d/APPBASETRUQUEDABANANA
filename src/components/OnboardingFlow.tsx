@@ -1,148 +1,217 @@
-import { useMemo, useState } from "react";
-import { ArrowRight, Check, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, Leaf, Sparkles } from "lucide-react";
 import { generateProfileName, type UserProfile } from "../state/ondaTeslaState";
 
 interface OnboardingFlowProps {
   readonly onComplete: (profile: UserProfile) => void;
-  readonly onSkip: () => void;
 }
 
-const questions = [
-  {
-    key: "tinnitusType",
-    title: "¿Cómo aparece tu zumbido?",
-    options: ["Pitido agudo", "Ruido constante", "Ruido eléctrico", "Pulsación", "Presión en el oído", "Otro"]
-  },
-  {
-    key: "bothersMost",
-    title: "¿Cuándo molesta más?",
-    options: ["Al despertar", "Durante el día", "En conversaciones", "En silencio", "Antes de dormir", "Todo el día"],
-    multi: true
-  },
-  {
-    key: "mainImpact",
-    title: "¿Qué impacto pesa más?",
-    options: ["Sueño", "Enfoque", "Conversaciones", "Claridad mental", "Ansiedad", "Vida social"]
-  },
-  {
-    key: "mainGoal",
-    title: "¿Cuál es tu meta principal?",
-    options: ["Reducir volumen del zumbido", "Dormir mejor", "Tener más claridad", "Escuchar conversaciones mejor", "Crear rutina diaria", "Controlar spikes"]
+type QuizKey = keyof Omit<UserProfile, "profileName">;
+
+interface QuizQuestion {
+  readonly key: QuizKey;
+  readonly title: string;
+  readonly type?: "text" | "number";
+  readonly options?: readonly string[];
+  readonly multi?: boolean;
+  readonly suffix?: string;
+}
+
+const questions: readonly QuizQuestion[] = [
+  { key: "name", title: "Qual seu nome?", type: "text" },
+  { key: "age", title: "Qual sua idade?", type: "number", suffix: "anos" },
+  { key: "height", title: "Qual sua altura?", type: "number", suffix: "cm" },
+  { key: "currentWeight", title: "Qual seu peso atual?", type: "number", suffix: "kg" },
+  { key: "goalWeight", title: "Qual peso deseja atingir?", type: "number", suffix: "kg" },
+  { key: "mainGoal", title: "Qual seu principal objetivo?", options: ["Perder barriga", "Desinchar", "Diminuir vontade de doce", "Ter mais disposição", "Melhorar autoestima", "Sair do efeito sanfona"] },
+  { key: "fatArea", title: "Onde você mais acumula gordura?", options: ["Barriga", "Coxas", "Braços", "Costas", "Quadril", "Corpo todo"] },
+  { key: "bloating", title: "Você se sente inchada?", options: ["Todos os dias", "Algumas vezes na semana", "Raramente"] },
+  { key: "mainDifficulty", title: "Qual sua maior dificuldade?", options: ["Ansiedade", "Fome à noite", "Vontade de doce", "Falta de tempo", "Não tenho constância", "Já começo e paro"] },
+  { key: "triedBefore", title: "Você já tentou alguma dessas opções?", options: ["Dietas", "Jejum", "Academia", "Chás", "Cápsulas", "Remédios", "E-books", "Receitas da internet"], multi: true },
+  { key: "routine", title: "Como está sua rotina?", options: ["Muito corrida", "Moderada", "Tenho bastante tempo", "Não tenho rotina"] },
+  { key: "activityLevel", title: "Nível de atividade", options: ["Sedentária", "Caminho pouco", "Moderada", "Ativa"] },
+  { key: "waterCups", title: "Quantos copos de água bebe por dia?", options: ["1 a 2", "3 a 4", "5 a 6", "7+"] },
+  { key: "preferredTime", title: "Qual horário seria mais fácil fazer a receita?", options: ["Manhã", "Tarde", "Noite"] },
+  { key: "sweetCraving", title: "Você costuma sentir vontade de doce?", options: ["Sim, todo dia", "Às vezes", "Pouco"] },
+  { key: "sleep", title: "Como está seu sono?", options: ["Ruim", "Médio", "Bom"] },
+  { key: "wantsReminders", title: "Você quer receber lembretes?", options: ["Sim", "Não"] }
+];
+
+const initialAnswers: Omit<UserProfile, "profileName"> = {
+  name: "",
+  age: 45,
+  height: 160,
+  currentWeight: 78,
+  goalWeight: 68,
+  mainGoal: "Perder barriga",
+  fatArea: "Barriga",
+  bloating: "Algumas vezes na semana",
+  mainDifficulty: "Vontade de doce",
+  triedBefore: ["Dietas"],
+  routine: "Moderada",
+  activityLevel: "Caminho pouco",
+  waterCups: "3 a 4",
+  preferredTime: "Manhã",
+  sweetCraving: "Às vezes",
+  sleep: "Médio",
+  wantsReminders: "Sim"
+};
+
+export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+  const [introStep, setIntroStep] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [answers, setAnswers] = useState<Omit<UserProfile, "profileName">>(initialAnswers);
+  const question = questions[questionIndex];
+  const profile = useMemo(() => ({ ...answers, profileName: generateProfileName(answers) }), [answers]);
+
+  useEffect(() => {
+    if (!analyzing) return;
+    const timer = window.setInterval(() => {
+      setAnalysisProgress((value) => {
+        const next = Math.min(100, value + 12);
+        if (next >= 100) window.clearInterval(timer);
+        return next;
+      });
+    }, 260);
+    return () => window.clearInterval(timer);
+  }, [analyzing]);
+
+  if (introStep < 3) {
+    const intro = [
+      ["Não é uma receita igual para todo mundo", "O app analisa suas respostas para montar uma orientação mais adequada ao seu perfil."],
+      ["Você saberá o que fazer todos os dias", "Receita, checklist, lembrete, acompanhamento e progresso em uma rotina simples."],
+      ["Seu progresso fica visível", "Registre peso, cintura, inchaço, fome, disposição e fotos para acompanhar sua evolução."]
+    ][introStep];
+    return (
+      <div className="onboarding-shell">
+        <div className="onboarding-panel">
+          <div className="onboarding-top"><span>{introStep + 1}/3</span><strong>Boas-vindas</strong></div>
+          <div className="onboarding-progress"><span style={{ width: `${((introStep + 1) / 3) * 100}%` }} /></div>
+          <section className="onboarding-question">
+            <span className="protocol-eyebrow"><Leaf size={14} /> Banana App</span>
+            <h1>{intro[0]}</h1>
+            <p>{intro[1]}</p>
+          </section>
+          <button className="protocol-primary onboarding-cta" type="button" onClick={() => setIntroStep((value) => value + 1)}>
+            {introStep === 2 ? "Começar agora" : "Continuar"}
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+    );
   }
-] as const;
 
-export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
-  const [step, setStep] = useState(0);
-  const [intensity, setIntensity] = useState(5);
-  const [answers, setAnswers] = useState<Record<string, string | readonly string[]>>({
-    tinnitusType: "Apito agudo",
-    bothersMost: ["Antes de dormir"],
-    mainImpact: "Sueño",
-    mainGoal: "Dormir mejor"
-  });
+  if (analyzing) {
+    const messages = [
+      "Analisando suas respostas...",
+      "Identificando seu perfil...",
+      "Calculando sua rotina ideal...",
+      "Ajustando sua Receita da Banana Bariátrica...",
+      "Montando seu plano de 21 dias...",
+      "Preparando seu painel de progresso...",
+      "Seu plano está pronto."
+    ];
+    const message = messages[Math.min(messages.length - 1, Math.floor((analysisProgress / 100) * messages.length))];
+    return (
+      <div className="onboarding-shell">
+        <div className="onboarding-panel">
+          <section className="onboarding-question">
+            <span className="protocol-eyebrow"><Sparkles size={14} /> Análise</span>
+            <h1>{message}</h1>
+            <div className="scale-card">
+              <strong>{analysisProgress}%</strong>
+              <div className="onboarding-progress large"><span style={{ width: `${analysisProgress}%` }} /></div>
+            </div>
+            {analysisProgress >= 100 ? (
+              <div className="profile-result">
+                <p><strong>{profile.profileName}</strong></p>
+                <p>Meta: {profile.currentWeight}kg → {profile.goalWeight}kg</p>
+                <p>Horário recomendado: {profile.preferredTime}</p>
+              </div>
+            ) : null}
+          </section>
+          <button className="protocol-primary onboarding-cta" type="button" disabled={analysisProgress < 100} onClick={() => onComplete(profile)}>
+            Acessar meu plano
+            <Check size={18} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const isIntensity = step === 1;
-  const totalSteps = questions.length + 2;
-  const profileDraft = useMemo(() => {
-    const draft = {
-      tinnitusType: String(answers.tinnitusType ?? "Outro"),
-      intensity,
-      bothersMost: Array.isArray(answers.bothersMost) ? answers.bothersMost : [String(answers.bothersMost ?? "Durante o dia")],
-      mainImpact: String(answers.mainImpact ?? "Claridad mental"),
-      mainGoal: String(answers.mainGoal ?? "Crear rutina diaria")
-    };
-    return { ...draft, profileName: generateProfileName(draft) };
-  }, [answers, intensity]);
+  function setAnswer(value: string | number | readonly string[]) {
+    setAnswers((current) => ({ ...current, [question.key]: value }));
+  }
 
-  function choose(key: string, option: string, multi?: boolean) {
-    if (!multi) {
-      setAnswers((current) => ({ ...current, [key]: option }));
+  function choose(option: string) {
+    if (question.multi) {
+      const current = answers[question.key];
+      const list = Array.isArray(current) ? current : [];
+      setAnswer(list.includes(option) ? list.filter((item) => item !== option) : [...list, option]);
       return;
     }
-    setAnswers((current) => {
-      const currentList = Array.isArray(current[key]) ? current[key] as readonly string[] : [];
-      const next = currentList.includes(option) ? currentList.filter((item) => item !== option) : [...currentList, option];
-      return { ...current, [key]: next.length ? next : [option] };
-    });
+    setAnswer(option);
   }
 
   function next() {
-    if (step < totalSteps - 1) setStep((value) => value + 1);
-    else onComplete(profileDraft);
+    if (questionIndex < questions.length - 1) setQuestionIndex((value) => value + 1);
+    else {
+      setAnalysisProgress(0);
+      setAnalyzing(true);
+    }
   }
 
-  const questionIndex = step > 1 ? step - 2 : step;
-  const question = questions[questionIndex];
+  const value = answers[question.key];
+  const canContinue = Array.isArray(value) ? value.length > 0 : String(value).trim().length > 0;
 
   return (
     <div className="onboarding-shell">
       <div className="onboarding-panel">
         <div className="onboarding-top">
-          <span>{step + 1}/{totalSteps}</span>
-          <button type="button" onClick={onSkip}>Saltar</button>
+          <span>{questionIndex + 1}/{questions.length}</span>
+          <strong>Quiz personalizado</strong>
         </div>
-        <div className="onboarding-progress"><span style={{ width: `${((step + 1) / totalSteps) * 100}%` }} /></div>
-
-        {step === 0 ? (
-          <section className="onboarding-question">
-            <span className="protocol-eyebrow">Diagnóstico inicial</span>
-            <h1>{questions[0].title}</h1>
-            <AnswerList question={questions[0]} answers={answers} choose={choose} />
-          </section>
-        ) : isIntensity ? (
-          <section className="onboarding-question">
-            <span className="protocol-eyebrow">Intensidade</span>
-            <h1>Del 0 al 10, ¿cuánto molesta hoy?</h1>
-            <div className="scale-card">
-              <strong>{intensity}</strong>
-              <input min="0" max="10" value={intensity} type="range" onChange={(event) => setIntensity(Number(event.target.value))} />
-              <div><span>silencioso</span><span>intenso</span></div>
-            </div>
-          </section>
-        ) : step < totalSteps - 1 ? (
-          <section className="onboarding-question">
-            <span className="protocol-eyebrow">Perfil auditivo</span>
-            <h1>{question.title}</h1>
-            <AnswerList question={question} answers={answers} choose={choose} />
-          </section>
-        ) : (
-          <section className="onboarding-question">
-            <span className="protocol-eyebrow"><ShieldCheck size={14} /> Perfil generado</span>
-            <h1>{profileDraft.profileName}</h1>
-            <div className="profile-result">
-              <p>Zumbido: {profileDraft.tinnitusType}</p>
-              <p>Impacto principal: {profileDraft.mainImpact}</p>
-              <p>Meta: {profileDraft.mainGoal}</p>
-            </div>
-            <div className="trust-note">
-              Usa un volumen cómodo. La app no sustituye orientación médica. Busca ayuda ante pérdida auditiva súbita, dolor fuerte, mareo intenso o zumbido pulsátil nuevo.
-            </div>
-          </section>
-        )}
-
-        <button className="protocol-primary onboarding-cta" type="button" onClick={next}>
-          {step === totalSteps - 1 ? "Entrar a mi protocolo" : "Continuar"}
-          {step === totalSteps - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
-        </button>
+        <div className="onboarding-progress"><span style={{ width: `${((questionIndex + 1) / questions.length) * 100}%` }} /></div>
+        <section className="onboarding-question">
+          <span className="protocol-eyebrow">Plano de 21 dias</span>
+          <h1>{question.title}</h1>
+          {question.type ? (
+            <label className="scale-card quiz-input-card">
+              <input
+                autoFocus
+                type={question.type}
+                value={String(value)}
+                onChange={(event) => setAnswer(question.type === "number" ? Number(event.target.value) : event.target.value)}
+              />
+              {question.suffix ? <span>{question.suffix}</span> : null}
+            </label>
+          ) : (
+            <AnswerList question={question} value={value} choose={choose} />
+          )}
+        </section>
+        <div className="onboarding-actions">
+          <button className="protocol-secondary" type="button" disabled={questionIndex === 0} onClick={() => setQuestionIndex((value) => value - 1)}>
+            <ArrowLeft size={18} /> Voltar
+          </button>
+          <button className="protocol-primary" type="button" disabled={!canContinue} onClick={next}>
+            {questionIndex === questions.length - 1 ? "Analisar meu perfil" : "Continuar"}
+            <ArrowRight size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-interface AnswerListProps {
-  readonly question: typeof questions[number];
-  readonly answers: Record<string, string | readonly string[]>;
-  readonly choose: (key: string, option: string, multi?: boolean) => void;
-}
-
-function AnswerList({ question, answers, choose }: AnswerListProps) {
+function AnswerList({ choose, question, value }: { readonly choose: (option: string) => void; readonly question: QuizQuestion; readonly value: unknown }) {
   return (
     <div className="answer-list">
-      {question.options.map((option) => {
-        const current = answers[question.key];
-        const selected = Array.isArray(current) ? current.includes(option) : current === option;
+      {question.options?.map((option) => {
+        const selected = Array.isArray(value) ? value.includes(option) : value === option;
         return (
-          <button className={selected ? "selected" : ""} key={option} type="button" onClick={() => choose(question.key, option, "multi" in question ? question.multi : false)}>
+          <button className={selected ? "selected" : ""} key={option} type="button" onClick={() => choose(option)}>
             {option}
             {selected ? <Check size={17} /> : null}
           </button>

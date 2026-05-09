@@ -2,6 +2,10 @@ node_modules/
 dist/
 
 *.log
+.env
+.env.local
+.env.*.local
 preview-current-*.png
+preview-*.png
 
 vinciule-meu-projeto-mcp-do-stitch/

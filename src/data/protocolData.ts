@@ -1,14 +1,14 @@
 import {
-  Activity,
-  BookOpen,
-  Crosshair,
+  BarChart3,
+  CheckSquare,
+  Gift,
   Home,
-  PlayCircle
+  Utensils
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type ScreenId = "home" | "player" | "emergency" | "progress" | "guide";
-export type AudioCategory = "Principal" | "Emergencia" | "Sueño" | "Enfoque";
+export type AudioCategory = "Receita" | "Agua" | "Doces" | "Bonus";
 
 export interface NavigationItem {
   readonly id: ScreenId;
@@ -46,188 +46,152 @@ export interface Milestone {
   readonly description: string;
 }
 
+export interface PlanDay {
+  readonly day: number;
+  readonly title: string;
+  readonly objective: string;
+  readonly task: string;
+}
+
 export const navigationItems: readonly NavigationItem[] = [
-  { id: "home", label: "Hoy", icon: Home },
-  { id: "player", label: "Player", icon: PlayCircle },
-  { id: "emergency", label: "Emergencia", icon: Crosshair },
-  { id: "progress", label: "Progreso", icon: Activity },
-  { id: "guide", label: "Guía", icon: BookOpen }
+  { id: "home", label: "Início", icon: Home },
+  { id: "player", label: "Receita", icon: Utensils },
+  { id: "emergency", label: "Check-in", icon: CheckSquare },
+  { id: "progress", label: "Progresso", icon: BarChart3 },
+  { id: "guide", label: "Bônus", icon: Gift }
 ];
 
 export const audioLibrary: readonly ProtocolAudio[] = [
   {
-    id: "onda-tesla-principal",
-    name: "Onda Tesla Principal",
-    category: "Principal",
+    id: "receita-banana-principal",
+    name: "Receita da Banana Bariátrica",
+    category: "Receita",
     duration: 9,
-    bestMoment: "Sesión diaria",
-    description: "Protocolo principal para rutina auditiva y claridad."
+    bestMoment: "Horário recomendado",
+    description: "Receita do dia ajustada ao perfil, rotina e objetivo."
   },
   {
-    id: "silencio-express",
-    name: "Silencio Express",
-    category: "Emergencia",
+    id: "agua-do-dia",
+    name: "Meta de Água",
+    category: "Agua",
+    duration: 2,
+    bestMoment: "Ao longo do dia",
+    description: "Controle simples de copos para apoiar leveza e rotina."
+  },
+  {
+    id: "controle-doce",
+    name: "Controle Vontade de Doce",
+    category: "Doces",
     duration: 3,
-    bestMoment: "Spike de zumbido",
-    description: "Para momentos en que el zumbido sube de repente."
+    bestMoment: "Quando a vontade subir",
+    description: "Protocolo rápido: água, pausa de 3 minutos e escolha leve."
   },
   {
-    id: "escudo-anti-spike",
-    name: "Escudo Anti-Spike",
-    category: "Emergencia",
-    duration: 7,
-    bestMoment: "Antes de detonantes",
-    description: "Para usar antes de situaciones que suelen empeorar el zumbido."
-  },
-  {
-    id: "paz-noturna",
-    name: "Paz Nocturna",
-    category: "Sueño",
-    duration: 8,
-    bestMoment: "Antes de dormir",
-    description: "Para relajarte y preparar una noche más tranquila."
-  },
-  {
-    id: "sono-quantico",
-    name: "Sueño Cuántico",
-    category: "Sueño",
-    duration: 12,
-    bestMoment: "Insomnio o noche difícil",
-    description: "Para apoyar una relajación profunda antes de dormir."
-  },
-  {
-    id: "reset-matutino",
-    name: "Reset Matutino",
-    category: "Enfoque",
+    id: "bonus-cardapio",
+    name: "Cardápio Barriga Leve",
+    category: "Bonus",
     duration: 5,
-    bestMoment: "Mañana",
-    description: "Para empezar el día con más claridad."
-  },
-  {
-    id: "concentracao-laser",
-    name: "Concentración Láser",
-    category: "Enfoque",
-    duration: 10,
-    bestMoment: "Trabajo o lectura",
-    description: "Para enfocarte en reuniones, lectura o tareas importantes."
+    bestMoment: "Planejamento da semana",
+    description: "Ideias simples para acompanhar o plano sem complicação."
   }
 ];
 
 export const routineTemplates: readonly RoutineTemplate[] = [
-  { id: "manha", label: "Mañana", audioId: "reset-matutino", goal: "Empezar con claridad" },
-  { id: "principal", label: "Principal", audioId: "onda-tesla-principal", goal: "Sesión diaria obligatoria" },
-  { id: "noite", label: "Noche", audioId: "paz-noturna", goal: "Dormir con más calma" },
-  { id: "emergencia", label: "Emergencia", audioId: "silencio-express", goal: "Usar solo en spike" }
+  { id: "receita", label: "Receita", audioId: "receita-banana-principal", goal: "Fazer a receita do dia" },
+  { id: "agua", label: "Água", audioId: "agua-do-dia", goal: "Bater a meta de copos" },
+  { id: "checkin", label: "Check-in", audioId: "receita-banana-principal", goal: "Registrar peso, fome e disposição" },
+  { id: "dica", label: "Dica", audioId: "bonus-cardapio", goal: "Ler a orientação do dia" }
 ];
 
 export const milestones: readonly Milestone[] = [
-  { day: 1, title: "Primera sesión", description: "Tu protocolo empezó." },
-  { day: 3, title: "Primera racha", description: "Tres días crean tracción." },
-  { day: 7, title: "Primera semana", description: "La rutina deja de sentirse nueva." },
-  { day: 14, title: "Consistencia inicial", description: "El seguimiento empieza a mostrar señales." },
-  { day: 21, title: "Rutina estable", description: "Menos fricción para escuchar cada día." },
-  { day: 30, title: "Primer mes", description: "Datos suficientes para comparar patrones." },
-  { day: 60, title: "Protocolo avanzado", description: "La jornada ya tiene historial real." },
-  { day: 90, title: "Jornada completa", description: "Ciclo completo de seguimiento." }
+  { day: 1, title: "Primeiro passo", description: "Seu plano personalizado começou." },
+  { day: 3, title: "Primeira sequência", description: "Três dias criam sensação de progresso." },
+  { day: 7, title: "Primeira revisão", description: "Hora de comparar sinais de leveza e constância." },
+  { day: 14, title: "Segunda revisão", description: "A rotina já tem dados reais para ajustar." },
+  { day: 21, title: "Ciclo concluído", description: "Relatório final e plano de continuidade." }
+];
+
+export const planDays: readonly PlanDay[] = [
+  { day: 1, title: "Começo simples", objective: "Iniciar sem perfeccionismo.", task: "Fazer receita + check-in." },
+  { day: 2, title: "Menos confusão", objective: "Repetir o ritual.", task: "Marcar receita e água." },
+  { day: 3, title: "Primeira microvitória", objective: "Registrar sinais de leveza.", task: "Comparar inchaço." },
+  { day: 4, title: "Água e rotina", objective: "Melhorar hidratação.", task: "Bater meta de copos." },
+  { day: 5, title: "Vontade de doce", objective: "Identificar gatilhos.", task: "Usar protocolo de 3 minutos." },
+  { day: 6, title: "Barriga e medidas", objective: "Registrar cintura.", task: "Atualizar medida." },
+  { day: 7, title: "Primeira revisão", objective: "Ver evolução semanal.", task: "Ler relatório." },
+  { day: 8, title: "Ajuste de constância", objective: "Corrigir falhas.", task: "Plano mínimo." },
+  { day: 9, title: "Ansiedade alimentar", objective: "Reduzir beliscos.", task: "Registrar fome." },
+  { day: 10, title: "Sono e fome", objective: "Conectar sono e rotina.", task: "Registrar disposição." },
+  { day: 11, title: "Reforço do plano", objective: "Manter sequência.", task: "Receita + água." },
+  { day: 12, title: "Roupa e autoestima", objective: "Registrar percepção corporal.", task: "Nota rápida." },
+  { day: 13, title: "Foco na barriga", objective: "Reforçar medidas.", task: "Atualizar cintura." },
+  { day: 14, title: "Segunda revisão", objective: "Relatório de 14 dias.", task: "Ver progresso." },
+  { day: 15, title: "Anti-sanfona", objective: "Introduzir manutenção.", task: "Ler guia." },
+  { day: 16, title: "Energia", objective: "Avaliar disposição.", task: "Check-in completo." },
+  { day: 17, title: "Ajuste final", objective: "Preparar últimos dias.", task: "Recalcular se preciso." },
+  { day: 18, title: "Pós-21", objective: "Apresentar continuidade.", task: "Ver plano pós-21." },
+  { day: 19, title: "Manutenção", objective: "Reduzir medo de recomeçar.", task: "Plano mínimo." },
+  { day: 20, title: "Revisão final", objective: "Consolidar evolução.", task: "Atualizar fotos/medidas." },
+  { day: 21, title: "Fechamento", objective: "Gerar relatório final.", task: "Concluir ciclo." }
 ];
 
 export const guideModules: readonly GuideModule[] = [
   {
-    id: "why-9",
-    title: "¿Por qué 9 minutos?",
-    description: "Una ventana corta reduce fricción y facilita la constancia diaria.",
-    readingTime: "1 min",
+    id: "cardapio",
+    title: "Cardápio Barriga Leve",
+    description: "Receitas simples para acompanhar o plano.",
+    readingTime: "3 min",
+    paragraphs: ["Use como apoio para facilitar escolhas.", "Não precisa ser perfeito: organize o próximo passo.", "A lista de compras reduz abandono."]
+  },
+  {
+    id: "cha",
+    title: "Chá Noturno Japonês",
+    description: "Rotina leve para desinchar, reduzir beliscos e apoiar seu plano.",
+    readingTime: "2 min",
     paragraphs: [
-      "La VSL presenta 9 minutos como una rutina corta para mantener adherencia diaria.",
-      "El protocolo usa esa duración para reducir fricción, no para prometer un efecto inmediato.",
-      "Úsalo como guía de rutina, no como diagnóstico."
+      "O Chá Noturno Japonês é uma rotina simples para ajudar seu corpo a desacelerar, reduzir a vontade de beliscar e deixar sua noite mais leve.",
+      "Ele combina ervas e especiarias usadas para apoiar digestão, controle da vontade de doce, sensação de leveza e organização da rotina alimentar.",
+      "Esse chá funciona melhor quando você usa junto com sua Receita da Banana Bariátrica, bebe água, evita exageros à noite e mantém o check-in diário."
     ]
   },
   {
-    id: "gamma",
-    title: "¿Qué es la Onda Gamma?",
-    description: "Un patrón auditivo usado en la narrativa del protocolo.",
-    readingTime: "1 min",
-    paragraphs: [
-      "La VSL usa la idea de Onda Gamma para explicar enfoque y respuesta auditiva.",
-      "En la app, eso se convierte en una sesión guiada con fases y check-in.",
-      "Mantén un volumen cómodo y observa tu respuesta percibida."
-    ]
+    id: "sanfona",
+    title: "Guia Anti-Efeito Sanfona",
+    description: "Como continuar depois dos 21 dias.",
+    readingTime: "4 min",
+    paragraphs: ["A manutenção começa com constância pequena.", "Repetir o básico evita o ciclo começa-e-para.", "No dia 18, o app apresenta o plano pós-21."]
   },
   {
-    id: "zombie-cells",
-    title: "¿Qué son las células zombi?",
-    description: "Una metáfora educativa para explicar desgaste e inflamación.",
-    readingTime: "1 min",
-    paragraphs: [
-      "El protocolo usa esta narrativa para explicar procesos de desgaste del cuerpo.",
-      "Aquí tratamos el término como lenguaje educativo de la VSL, sin reemplazar una evaluación médica.",
-      "Tu seguimiento principal es constancia, zumbido percibido, sueño y claridad."
-    ]
+    id: "doces",
+    title: "Guia Vontade de Doce",
+    description: "Estratégias simples para reduzir beliscos.",
+    readingTime: "2 min",
+    paragraphs: ["Quando a vontade subir, faça água + pausa.", "Observe horário e gatilho.", "Registrar o padrão já é progresso."]
   },
   {
-    id: "auditory-nerve",
-    title: "Zumbido y nervio auditivo",
-    description: "El enfoque de la app es respuesta, rutina y observación.",
-    readingTime: "1 min",
-    paragraphs: [
-      "El zumbido puede tener causas distintas y merece atención profesional cuando cambia de forma brusca.",
-      "Onda Tesla organiza una rutina de escucha y registro para seguir patrones.",
-      "Busca ayuda si hay dolor fuerte, pérdida auditiva súbita o mareo intenso."
-    ]
-  },
-  {
-    id: "masking",
-    title: "¿Por qué algunos dispositivos enmascaran?",
-    description: "El enmascaramiento puede aliviar, pero no sustituye rutina y registro.",
-    readingTime: "1 min",
-    paragraphs: [
-      "Enmascarar sonido puede traer alivio en algunos momentos.",
-      "La propuesta de la app es crear un protocolo diario con check-ins y progreso.",
-      "Usa recursos de alivio sin subir el volumen de forma agresiva."
-    ]
-  },
-  {
-    id: "how-to-use",
-    title: "¿Cómo usarlo correctamente?",
-    description: "Audífonos, volumen cómodo, 9 minutos y check-in.",
-    readingTime: "1 min",
-    paragraphs: [
-      "Usa audífonos con volumen cómodo.",
-      "Completa la sesión principal una vez al día.",
-      "Registra zumbido, claridad, calma y sueño para crear historial."
-    ]
-  },
-  {
-    id: "hard-days",
-    title: "Días difíciles",
-    description: "Usa el flujo de spike sin alarma.",
-    readingTime: "1 min",
-    paragraphs: [
-      "Cuando el zumbido suba, usa Emergencia para elegir tu estado actual.",
-      "La app recomienda un audio corto y registra el resultado.",
-      "Si aparece un síntoma nuevo fuerte, busca orientación profesional."
-    ]
-  },
-  {
-    id: "journey",
-    title: "Progreso de 90 días",
-    description: "Sigue constancia, sueño, calma y zumbido percibido.",
-    readingTime: "1 min",
-    paragraphs: [
-      "La jornada de 90 días ayuda a observar patrones con menos ansiedad.",
-      "Los gráficos muestran datos reales guardados localmente.",
-      "La constancia vale más que perseguir un número perfecto."
-    ]
+    id: "movimento",
+    title: "Movimento Leve em Casa",
+    description: "Rotina iniciante de 5 a 7 minutos.",
+    readingTime: "3 min",
+    paragraphs: ["Movimento leve deve caber na rotina.", "Sem equipamentos e sem cobrança pesada.", "A meta é constância, não intensidade."]
   }
 ];
 
-export const emergencyRecommendations: Record<string, string> = {
-  "El zumbido subió": "silencio-express",
-  "Estoy ansioso": "silencio-express",
-  "Estoy intentando dormir": "paz-noturna",
-  "Necesito enfocarme": "concentracao-laser",
-  "Ambiente demasiado silencioso": "escudo-anti-spike"
-};
+export const helpOptions = [
+  "Não consegui acessar meu plano",
+  "Não entendi a receita",
+  "Não consegui fazer hoje",
+  "Não vi resultado ainda",
+  "Estou sem constância",
+  "Quero falar com suporte",
+  "Quero entender minha garantia"
+] as const;
 
-export const waveBars = [16, 28, 42, 30, 60, 38, 72, 48, 24, 46, 68, 80, 52, 34, 66, 76, 44, 28, 58, 72, 82, 54, 38, 62, 78, 46, 26, 40, 64, 78, 58, 36, 24, 18];
+export const upsells = [
+  { title: "Acompanhamento VIP Banana", price: "R$ 47 a R$ 97", trigger: "Se quiser ajuda nos primeiros 30 dias." },
+  { title: "Cardápio Barriga Leve", price: "R$ 27 a R$ 47", trigger: "Para facilitar refeições e lista de compras." },
+  { title: "Movimento Leve 7 Minutos", price: "R$ 27 a R$ 57", trigger: "Para sedentárias que querem começar sem pressão." },
+  { title: "Plano Pós-21 Anti-Sanfona", price: "R$ 47 a R$ 97", trigger: "Continuidade depois do ciclo." }
+] as const;
+
+export const waveBars = [16, 28, 42, 30, 60, 38, 72, 48, 24, 46, 68, 80, 52, 34, 66, 76, 44, 28, 58, 72, 82];

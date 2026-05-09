@@ -1,16 +1,19 @@
 import type { Dispatch, SetStateAction } from "react";
-import { Download, ShieldCheck, Trash2, X } from "lucide-react";
-import { defaultState, generateProfileName, todayKey, type OndaTeslaState } from "../state/ondaTeslaState";
+import { Download, LogOut, ShieldCheck, Trash2, X } from "lucide-react";
+import { todayKey, type OndaTeslaState } from "../state/ondaTeslaState";
+import type { AuthSession } from "../state/authState";
 
 interface SettingsSheetProps {
+  readonly authSession: AuthSession;
   readonly open: boolean;
   readonly state: OndaTeslaState;
   readonly setState: Dispatch<SetStateAction<OndaTeslaState>>;
   readonly onClose: () => void;
+  readonly onLogout: () => void;
   readonly onResetAll: () => void;
 }
 
-export function SettingsSheet({ onClose, onResetAll, open, setState, state }: SettingsSheetProps) {
+export function SettingsSheet({ authSession, onClose, onLogout, onResetAll, open, setState, state }: SettingsSheetProps) {
   function updateReminder(key: keyof OndaTeslaState["reminderSettings"], value: boolean | string) {
     setState((current) => ({ ...current, reminderSettings: { ...current.reminderSettings, [key]: value } }));
   }
@@ -24,18 +27,18 @@ export function SettingsSheet({ onClose, onResetAll, open, setState, state }: Se
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `onda-tesla-progreso-${todayKey()}.json`;
+    link.download = `banana-app-progresso-${todayKey()}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }
 
   function resetOnboarding() {
-    setState((current) => ({ ...current, onboardingCompleted: false, userProfile: null }));
+    setState((current) => ({ ...current, onboardingCompleted: false, onboardingUserId: null, userProfile: null }));
     onClose();
   }
 
   function resetProgress() {
-    if (window.confirm("¿Restablecer progreso local? Esto borra sesiones, check-ins y emergencias de este navegador.")) {
+    if (window.confirm("Restabelecer progresso local? Isto apaga sessões, check-ins e dados deste navegador.")) {
       setState((current) => ({
         ...current,
         sessions: [],
@@ -49,63 +52,64 @@ export function SettingsSheet({ onClose, onResetAll, open, setState, state }: Se
   }
 
   function clearAll() {
-    if (window.confirm("¿Borrar todos los datos locales de Onda Tesla en este navegador?")) onResetAll();
+    if (window.confirm("Apagar todos os dados locais do Banana App neste navegador?")) onResetAll();
   }
 
   return (
     <div className={`protocol-modal settings-modal ${open ? "show" : ""}`}>
       <div className="protocol-modal-panel settings-panel">
         <div className="protocol-modal-head">
-          <div>
-            <h3>Ajustes</h3>
-            <p>Perfil auditivo, recordatorios, accesibilidad y datos locales.</p>
-          </div>
+          <div><h3>Ajustes</h3><p>Perfil, lembretes, acessibilidade e dados locais.</p></div>
           <button className="protocol-close-btn" type="button" onClick={onClose}><X size={18} /></button>
         </div>
 
         <section className="settings-section">
-          <h4>Perfil auditivo</h4>
-          <p>{state.userProfile?.profileName ?? "Perfil aún no definido"}</p>
-          {state.userProfile ? <small>{generateProfileName(state.userProfile)} · intensidade {state.userProfile.intensity}/10</small> : null}
-          <button className="protocol-secondary full" type="button" onClick={resetOnboarding}>Editar diagnóstico</button>
+          <h4>Conta</h4>
+          <p>{authSession.name}</p>
+          <small>{authSession.email}</small>
+          <button className="protocol-secondary full" type="button" onClick={onLogout}><LogOut size={17} /> Sair da conta</button>
         </section>
 
         <section className="settings-section">
-          <h4>Protocolo</h4>
-          <label>Inicio de la jornada<input type="date" value={state.journeyStartDate} onChange={(event) => setState((current) => ({ ...current, journeyStartDate: event.target.value || todayKey() }))} /></label>
-          <label>Horario preferido<input type="time" value={state.reminderSettings.dailySessionTime} onChange={(event) => updateReminder("dailySessionTime", event.target.value)} /></label>
+          <h4>Perfil Banana</h4>
+          <p>{state.userProfile?.profileName ?? "Perfil ainda não definido"}</p>
+          {state.userProfile ? <small>{state.userProfile.currentWeight}kg → {state.userProfile.goalWeight}kg · {state.userProfile.preferredTime}</small> : null}
+          <button className="protocol-secondary full" type="button" onClick={resetOnboarding}>Recalcular meu plano</button>
         </section>
 
         <section className="settings-section">
-          <h4>Recordatorios</h4>
-          <Toggle label="Recordatorio de la sesión principal" checked={state.reminderSettings.dailySessionEnabled} onChange={(value) => updateReminder("dailySessionEnabled", value)} />
-          <label>Horario de la sesión<input type="time" value={state.reminderSettings.dailySessionTime} onChange={(event) => updateReminder("dailySessionTime", event.target.value)} /></label>
-          <Toggle label="Recordatorio nocturno" checked={state.reminderSettings.nightReminderEnabled} onChange={(value) => updateReminder("nightReminderEnabled", value)} />
-          <label>Horario nocturno<input type="time" value={state.reminderSettings.nightReminderTime} onChange={(event) => updateReminder("nightReminderTime", event.target.value)} /></label>
-          <Toggle label="Recordatorio si pierdo un día" checked={state.reminderSettings.missedDayReminderEnabled} onChange={(value) => updateReminder("missedDayReminderEnabled", value)} />
-          <small>Los recordatorios reales dependen de los permisos del navegador.</small>
+          <h4>Plano</h4>
+          <label>Início da jornada<input type="date" value={state.journeyStartDate} onChange={(event) => setState((current) => ({ ...current, journeyStartDate: event.target.value || todayKey() }))} /></label>
+          <label>Horário preferido<input type="time" value={state.reminderSettings.dailySessionTime} onChange={(event) => updateReminder("dailySessionTime", event.target.value)} /></label>
         </section>
 
         <section className="settings-section">
-          <h4>Accesibilidad</h4>
-          <Toggle label="Texto más grande" checked={state.accessibilitySettings.largerText} onChange={(value) => updateAccessibility("largerText", value)} />
+          <h4>Lembretes</h4>
+          <Toggle label="Lembrete da receita" checked={state.reminderSettings.dailySessionEnabled} onChange={(value) => updateReminder("dailySessionEnabled", value)} />
+          <label>Horário da receita<input type="time" value={state.reminderSettings.dailySessionTime} onChange={(event) => updateReminder("dailySessionTime", event.target.value)} /></label>
+          <Toggle label="Lembrete noturno" checked={state.reminderSettings.nightReminderEnabled} onChange={(value) => updateReminder("nightReminderEnabled", value)} />
+          <label>Horário noturno<input type="time" value={state.reminderSettings.nightReminderTime} onChange={(event) => updateReminder("nightReminderTime", event.target.value)} /></label>
+          <Toggle label="Lembrete se eu perder um dia" checked={state.reminderSettings.missedDayReminderEnabled} onChange={(value) => updateReminder("missedDayReminderEnabled", value)} />
+          <small>Lembretes reais dependem das permissões do navegador.</small>
+        </section>
+
+        <section className="settings-section">
+          <h4>Acessibilidade</h4>
+          <Toggle label="Texto maior" checked={state.accessibilitySettings.largerText} onChange={(value) => updateAccessibility("largerText", value)} />
           <Toggle label="Alto contraste" checked={state.accessibilitySettings.highContrast} onChange={(value) => updateAccessibility("highContrast", value)} />
-          <Toggle label="Reducir movimiento" checked={state.accessibilitySettings.reduceMotion} onChange={(value) => updateAccessibility("reduceMotion", value)} />
+          <Toggle label="Reduzir movimento" checked={state.accessibilitySettings.reduceMotion} onChange={(value) => updateAccessibility("reduceMotion", value)} />
         </section>
 
         <section className="settings-section">
-          <h4>Datos</h4>
+          <h4>Dados</h4>
           <button className="protocol-secondary full" type="button" onClick={exportData}><Download size={17} /> Exportar JSON</button>
-          <button className="protocol-secondary full danger" type="button" onClick={resetProgress}><Trash2 size={17} /> Restablecer progreso</button>
-          <button className="protocol-secondary full danger" type="button" onClick={clearAll}>Borrar todo</button>
+          <button className="protocol-secondary full danger" type="button" onClick={resetProgress}><Trash2 size={17} /> Restabelecer progresso</button>
+          <button className="protocol-secondary full danger" type="button" onClick={clearAll}>Apagar tudo</button>
         </section>
 
         <section className="settings-section trust-card">
           <ShieldCheck size={18} />
-          <div>
-            <strong>Uso responsable</strong>
-            <p>Esta app no sustituye orientación médica. Usa un volumen cómodo y detente si hay molestia. Busca ayuda ante pérdida auditiva súbita, dolor fuerte, mareo intenso, zumbido pulsátil o síntomas neurológicos nuevos.</p>
-          </div>
+          <div><strong>Uso responsável</strong><p>Resultados variam. O app ajuda você a seguir uma rotina organizada, mas sua constância é essencial. Procure orientação profissional para questões de saúde.</p></div>
         </section>
       </div>
     </div>

@@ -1,195 +1,234 @@
-import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
-import { Check, Pause, Play, TimerReset, Waves, X } from "lucide-react";
-import { waveBars, type ProtocolAudio } from "../data/protocolData";
+import type { ReactNode } from "react";
+import { useState } from "react";
+import {
+  Check,
+  Clock,
+  Droplets,
+  HelpCircle,
+  Leaf,
+  ListChecks,
+  Play,
+  ShieldCheck,
+  ShoppingBasket,
+  Sparkles,
+  Utensils,
+  X
+} from "lucide-react";
 import type { PlayerSource } from "../App";
-import type { CheckInInput } from "../state/ondaTeslaState";
+import type { ProtocolAudio } from "../data/protocolData";
+import { dayNumber, type CheckInInput } from "../state/ondaTeslaState";
 
 interface PlayerScreenProps {
   readonly active: boolean;
   readonly audio: ProtocolAudio;
   readonly source: PlayerSource;
+  readonly journeyStartDate?: string;
   readonly onComplete: (checkIn: CheckInInput, emergencyResult?: string) => void;
 }
 
-const quickTags = ["Zumbido más bajo", "Igual", "Más intenso", "Más calmado", "Más claro", "Difícil enfocarme"];
+const defaultCheck: CheckInInput = {
+  madeRecipe: true,
+  waterCups: 4,
+  bloatingScore: 5,
+  sweetCravingScore: 5,
+  hungerScore: 5,
+  energyScore: 5,
+  weight: null,
+  waist: null,
+  note: "",
+  tags: ["Receita feita"]
+};
 
-export function PlayerScreen({ active, audio, source, onComplete }: PlayerScreenProps) {
-  const [remaining, setRemaining] = useState(audio.duration * 60);
-  const [running, setRunning] = useState(false);
-  const [checkOpen, setCheckOpen] = useState(false);
-  const [emergencyStep, setEmergencyStep] = useState(false);
-  const [form, setForm] = useState<CheckInInput>({
-    tinnitusScore: 5,
-    clarityScore: 5,
-    calmScore: 5,
-    sleepScore: audio.category === "Sueño" ? 5 : null,
-    tags: [],
-    note: ""
-  });
-  const intervalRef = useRef<number | null>(null);
-  const total = audio.duration * 60;
-  const progress = 1 - remaining / total;
-  const phase = progress < 0.33 ? "Preparación" : progress < 0.66 ? "Sincronización" : "Silencio y Claridad";
+const helpOptions = ["Não tinha banana", "Esqueci", "Fiquei sem tempo", "Não gostei do sabor", "Tive dúvida"];
+const shoppingItems = ["Banana", "Água", "Gengibre fresco", "Canela", "Cravo-da-índia"];
 
-  useEffect(() => {
-    setRemaining(audio.duration * 60);
-    setRunning(false);
-    setCheckOpen(false);
-    setEmergencyStep(false);
-    setForm({
-      tinnitusScore: 5,
-      clarityScore: 5,
-      calmScore: 5,
-      sleepScore: audio.category === "Sueño" ? 5 : isMorning() ? 5 : null,
-      tags: [],
-      note: ""
-    });
-  }, [audio]);
+export function PlayerScreen({ active, audio, journeyStartDate, onComplete }: PlayerScreenProps) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpReason, setHelpReason] = useState<string | null>(null);
+  const [listSaved, setListSaved] = useState(false);
+  const day = journeyStartDate ? dayNumber(journeyStartDate) : 1;
 
-  useEffect(() => {
-    if (!running) return;
-    intervalRef.current = window.setInterval(() => {
-      setRemaining((value) => {
-        if (value <= 1) {
-          window.clearInterval(intervalRef.current ?? undefined);
-          setRunning(false);
-          setCheckOpen(true);
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(intervalRef.current ?? undefined);
-  }, [running]);
-
-  function finishSession() {
-    if (total - remaining < 25) {
-      setCheckOpen(true);
-      return;
-    }
-    setRunning(false);
-    setCheckOpen(true);
+  function completeRecipe() {
+    onComplete(defaultCheck);
   }
 
-  function saveCheckIn() {
-    if (source.kind === "emergency") {
-      setEmergencyStep(true);
-      return;
-    }
-    onComplete(form);
-    setCheckOpen(false);
-    setRemaining(total);
+  function openHelp() {
+    setHelpReason(null);
+    setHelpOpen(true);
   }
-
-  function saveEmergency(result: string) {
-    onComplete(form, result);
-    setEmergencyStep(false);
-    setCheckOpen(false);
-    setRemaining(total);
-  }
-
-  function toggleTag(tag: string) {
-    setForm((current) => ({
-      ...current,
-      tags: current.tags.includes(tag) ? current.tags.filter((item) => item !== tag) : [...current.tags, tag]
-    }));
-  }
-
-  const min = Math.floor(remaining / 60);
-  const sec = remaining % 60;
 
   return (
     <section className={`screen neuro-screen player-protocol ${active ? "active" : ""}`}>
-      <div className="neuro-orbit" />
       <header className="neuro-heading">
-        <span className="protocol-eyebrow"><Waves size={14} /> Protocolo Auditivo</span>
-        <h1>{audio.category === "Principal" ? "Sesión Gamma" : audio.name}</h1>
-        <p>{audio.name}, {audio.duration} minutos. {audio.description}</p>
+        <span className="protocol-eyebrow"><Utensils size={14} /> Receita de hoje</span>
+        <h1>Receita da Banana Bariátrica — Dia {day}</h1>
+        <p>Seu primeiro ritual foi ajustado para começar de forma simples, leve e fácil de seguir.</p>
       </header>
 
-      <article className="ritual-player">
-        <div className="timer-dial" style={{ "--timerProgress": `${progress * 360}deg` } as CSSProperties}>
+      <article className="ritual-player banana-recipe-card recipe-delivery">
+        <section className="recipe-personal-card">
           <div>
-            <strong>{String(min).padStart(2, "0")}:{String(sec).padStart(2, "0")}</strong>
-            <span>{phase}</span>
+            <span className="recipe-mini-kicker"><Sparkles size={14} /> Plano ajustado para o seu perfil</span>
+            <h2>Comece com o básico bem feito</h2>
+            <p>Hoje o objetivo é iniciar sua rotina, reduzir a confusão e completar o primeiro check-in.</p>
+          </div>
+          <div className="recipe-chip-grid">
+            <span>Foco de hoje: começar sem perfeccionismo</span>
+            <span>Melhor horário: manhã ou em jejum leve</span>
+            <span>Dificuldade: simples</span>
+          </div>
+        </section>
+
+        <section className="recipe-hero-card">
+          <div className="recipe-hero-copy">
+            <span className="recipe-mini-kicker"><Utensils size={14} /> Receita Base do Dia 1</span>
+            <h2>{audio.name}</h2>
+            <p>O Truque da Banana em uma versão simples para começar hoje, sem complicar a rotina.</p>
+          </div>
+          <div className="banana-bowl-visual" aria-hidden="true">
+            <span>🍌</span>
+            <i />
+          </div>
+        </section>
+
+        <section className="recipe-video-card">
+          <div>
+            <span className="recipe-mini-kicker"><Play size={14} /> Videoaula</span>
+            <h2>Como preparar o Truque da Banana</h2>
+            <p>Assista à aula rápida e depois siga a base de ingredientes abaixo.</p>
+          </div>
+          <div className="recipe-video-frame">
+            <iframe
+              title="Videoaula do Truque da Banana"
+              src="https://www.youtube.com/embed/L2FkpEZA214"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+        </section>
+
+        <section className="recipe-block recipe-ingredients-card">
+          <h2>Ingredientes</h2>
+          <div className="ingredient-grid">
+            <Ingredient icon={<Leaf size={18} />} label="Casca de 1 banana bem higienizada" description="Use a casca da banana madura ou quase madura. Se possível, prefira banana orgânica." />
+            <Ingredient icon={<Droplets size={18} />} label="1 litro de água" description="Serve como base para extrair os compostos da casca e das especiarias." />
+            <Ingredient icon={<Sparkles size={18} />} label="1 pedaço pequeno de gengibre fresco" description="Ajuda a deixar o chá mais forte, aromático e digestivo." />
+            <Ingredient icon={<Sparkles size={18} />} label="1 pedaço de canela em pau ou 1 pitada de canela em pó" description="Ajuda no sabor e reduz a necessidade de adoçar." />
+            <Ingredient icon={<Leaf size={18} />} label="2 cravos-da-índia" description="Dá aroma e combina bem com o efeito digestivo do chá." />
+          </div>
+          <p className="recipe-note">
+            Higienize muito bem a casca antes do preparo. Se tiver restrição alimentar, gestação, uso de medicamentos ou condição de saúde, consulte um profissional antes de usar qualquer ingrediente novo.
+          </p>
+        </section>
+
+        <section className="recipe-block recipe-steps-card">
+          <h2>Modo de preparo</h2>
+          <div className="recipe-step-list">
+            {[
+              "Higienize bem a casca da banana antes de usar.",
+              "Aqueça 1 litro de água e adicione a casca, o gengibre, a canela e o cravo.",
+              "Deixe em infusão por alguns minutos para liberar aroma e sabor.",
+              "Coe antes de beber e tome em um horário confortável para sua rotina.",
+              "Depois, volte ao app e marque a receita como feita."
+            ].map((step, index) => (
+              <div className="recipe-step" key={step}>
+                <span>{index + 1}</span>
+                <p>{step}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="recipe-guidance-grid">
+          <div>
+            <Clock size={18} />
+            <strong>Horário sugerido</strong>
+            <p>De preferência pela manhã, antes do café ou como primeira bebida do dia.</p>
+          </div>
+          <div>
+            <HelpCircle size={18} />
+            <strong>Dica da Andrea</strong>
+            <p>Não tente fazer perfeito. Hoje o mais importante é começar e registrar seu primeiro dia.</p>
           </div>
         </div>
 
-        <div className="phase-copy">
-          <strong>{phase}</strong>
-          <p>{phaseCopy(phase)}</p>
-        </div>
-
-        <div className="waveform gamma-wave" aria-label="Waveform de la Sesión Gamma">
-          {waveBars.map((height, index) => <span className={index / waveBars.length < progress ? "active" : ""} key={`${height}-${index}`} style={{ height: `${height}%` }} />)}
-        </div>
+        <section className="recipe-why-card">
+          <h2>Por que essa receita foi liberada para você hoje?</h2>
+          <p>
+            Como este é o Dia 1, o app liberou uma versão inicial simples para o seu corpo se adaptar à rotina. Nos próximos dias, o plano poderá ajustar foco, horário, dicas e tarefas conforme seus check-ins.
+          </p>
+          <div>
+            <span>Seu foco: constância</span>
+            <span>Seu desafio: vontade de doce</span>
+            <span>Meta de hoje: receita + água + check-in</span>
+          </div>
+        </section>
 
         <div className="player-main-actions">
-          <button className="protocol-primary" type="button" onClick={() => setRunning(!running)}>
-            {running ? <Pause size={19} /> : <Play size={19} />}
-            {running ? "Pausar" : "Iniciar protocolo"}
+          <button className="protocol-primary" type="button" onClick={completeRecipe}>
+            <Check size={19} />
+            Marcar receita como feita
           </button>
-          <button className="protocol-secondary" type="button" onClick={() => setRemaining(total)}>
-            <TimerReset size={18} />
-            Reset
+          <button className="protocol-secondary" type="button" onClick={openHelp}>
+            <X size={18} />
+            Não consegui fazer hoje
           </button>
         </div>
 
-        <button className="finish-link" type="button" onClick={finishSession}>
-          <Check size={18} />
-          Finalizar y registrar check-in
-        </button>
+        <section className="recipe-shopping-card">
+          <div>
+            <span className="recipe-mini-kicker"><ShoppingBasket size={14} /> Lista de compras da semana</span>
+            <h2>Itens para deixar separados</h2>
+          </div>
+          <div className="shopping-list">
+            {shoppingItems.map((item) => <span key={item}><Check size={14} /> {item}</span>)}
+          </div>
+          <button className="protocol-secondary full" type="button" onClick={() => setListSaved(true)}>
+            <ListChecks size={17} />
+            {listSaved ? "Lista salva" : "Salvar lista"}
+          </button>
+        </section>
+
+        <section className="recipe-safety-note">
+          <ShieldCheck size={18} />
+          <p>Este conteúdo é educativo e não substitui orientação médica ou nutricional. Resultados variam de pessoa para pessoa.</p>
+        </section>
       </article>
 
-      <div className={`protocol-modal ${checkOpen ? "show" : ""}`}>
+      <div className={`protocol-modal ${helpOpen ? "show" : ""}`}>
         <div className="protocol-modal-panel checkin-panel">
           <div className="protocol-modal-head">
-            <div>
-              <h3>{emergencyStep ? "Resultado del spike" : "Check-in pos-sesión"}</h3>
-              <p>{emergencyStep ? "¿El zumbido quedó más controlable?" : "Registra señales reales para alimentar tu progreso."}</p>
-            </div>
-            <button className="protocol-close-btn" type="button" onClick={() => setCheckOpen(false)}><X size={18} /></button>
+            <div><h3>O que aconteceu?</h3><p>Escolha o motivo e veja uma solução simples para hoje.</p></div>
+            <button className="protocol-close-btn" type="button" onClick={() => setHelpOpen(false)}><X size={18} /></button>
           </div>
-          {emergencyStep ? (
-            <div className="protocol-check-grid">
-              {["Sí", "Un poco", "Igual", "Empeoró"].map((item) => <button key={item} type="button" onClick={() => saveEmergency(item)}>{item}</button>)}
+          <div className="protocol-check-grid">
+            {helpOptions.map((item) => (
+              <button className={helpReason === item ? "selected" : ""} key={item} type="button" onClick={() => setHelpReason(item)}>{item}</button>
+            ))}
+          </div>
+          {helpReason ? (
+            <div className="recipe-help-solution">
+              <strong>Solução para agora</strong>
+              <p>Você pode preparar ainda hoje se conseguir. Se não der, ative um lembrete para amanhã, veja a lista de compras e fale com suporte se tiver dúvida.</p>
+              <button className="protocol-primary full" type="button" onClick={() => setHelpOpen(false)}>Voltar para a receita</button>
             </div>
-          ) : (
-            <>
-              <SliderRow label="Zumbido ahora" left="silencioso" right="intenso" value={form.tinnitusScore} onChange={(value) => setForm((current) => ({ ...current, tinnitusScore: value }))} />
-              <SliderRow label="Claridad mental" left="confuso" right="muy claro" value={form.clarityScore} onChange={(value) => setForm((current) => ({ ...current, clarityScore: value }))} />
-              <SliderRow label="Calma" left="tenso" right="calmado" value={form.calmScore} onChange={(value) => setForm((current) => ({ ...current, calmScore: value }))} />
-              {form.sleepScore !== null ? <SliderRow label="Sueño" left="malo" right="óptimo" value={form.sleepScore} onChange={(value) => setForm((current) => ({ ...current, sleepScore: value }))} /> : null}
-              <div className="tag-grid">
-                {quickTags.map((tag) => <button className={form.tags.includes(tag) ? "selected" : ""} key={tag} type="button" onClick={() => toggleTag(tag)}>{tag}</button>)}
-              </div>
-              <textarea value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} placeholder="¿Alguna observación rápida?" />
-              <button className="protocol-primary full" type="button" onClick={saveCheckIn}>Guardar check-in</button>
-            </>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
 
-function phaseCopy(phase: string) {
-  if (phase === "Preparación") return "Ajusta el volumen, respira y deja que el zumbido salga del centro de atención.";
-  if (phase === "Sincronización") return "Mantén la escucha constante. La meta es regular la respuesta, no enmascararlo todo.";
-  return "Observa silencio, claridad auditiva y estado corporal antes del check-in.";
-}
-
-function isMorning() {
-  return new Date().getHours() < 11;
-}
-
-function SliderRow({ label, left, onChange, right, value }: { readonly label: string; readonly left: string; readonly onChange: (value: number) => void; readonly right: string; readonly value: number }) {
+function Ingredient({ description, icon, label }: { readonly description?: string; readonly icon: ReactNode; readonly label: string }) {
   return (
-    <label className="check-slider">
-      <span><strong>{label}</strong><b>{value}</b></span>
-      <input min="0" max="10" type="range" value={value} onChange={(event) => onChange(Number(event.target.value))} />
-      <small><em>{left}</em><em>{right}</em></small>
-    </label>
+    <div className="ingredient-item">
+      <span>{icon}</span>
+      <div>
+        <strong>{label}</strong>
+        {description ? <p>{description}</p> : null}
+      </div>
+    </div>
   );
 }

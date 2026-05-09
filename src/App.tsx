@@ -3,6 +3,7 @@ import { BottomNav } from "./components/BottomNav";
 import { EmergencyScreen } from "./components/EmergencyScreen";
 import { GuideScreen } from "./components/GuideScreen";
 import { HomeScreen } from "./components/HomeScreen";
+import { LoginScreen } from "./components/LoginScreen";
 import { OnboardingFlow } from "./components/OnboardingFlow";
 import { PlayerScreen } from "./components/PlayerScreen";
 import { ProgressScreen } from "./components/ProgressScreen";
@@ -16,10 +17,10 @@ import {
   saveOndaTeslaState,
   todayKey,
   type CheckInInput,
-  type EmergencyUse,
   type OndaTeslaState,
   type UserProfile
 } from "./state/ondaTeslaState";
+import { clearAuthSession, loadAuthSession, type AuthSession } from "./state/authState";
 
 export interface PlayerSource {
   readonly kind: "main" | "routine" | "library" | "emergency";
@@ -33,6 +34,7 @@ export function App() {
   const [selectedAudio, setSelectedAudio] = useState<ProtocolAudio>(audioLibrary[0]);
   const [playerSource, setPlayerSource] = useState<PlayerSource>({ kind: "main" });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => loadAuthSession());
 
   useEffect(() => {
     saveOndaTeslaState(appState);
@@ -41,7 +43,9 @@ export function App() {
     document.documentElement.classList.toggle("reduce-motion", appState.accessibilitySettings.reduceMotion);
   }, [appState]);
 
-  const hasOnboarding = appState.onboardingCompleted;
+  const hasOnboarding = appState.onboardingCompleted
+    && appState.userProfile
+    && appState.onboardingUserId === authSession?.userId;
 
   const context = useMemo(() => ({
     state: appState,
@@ -53,7 +57,7 @@ export function App() {
 
   function openScreen(screen: ScreenId) {
     setActiveScreen(screen);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function openAudio(audio: ProtocolAudio, source: PlayerSource = { kind: "library" }) {
@@ -66,13 +70,10 @@ export function App() {
     setAppState((current) => ({
       ...current,
       onboardingCompleted: true,
+      onboardingUserId: authSession?.userId ?? null,
       userProfile: profile,
       journeyStartDate: current.journeyStartDate || todayKey()
     }));
-  }
-
-  function skipOnboarding() {
-    setAppState((current) => ({ ...current, onboardingCompleted: true }));
   }
 
   function completeAudio(checkIn: CheckInInput, emergencyResult?: string) {
@@ -81,44 +82,64 @@ export function App() {
       if (playerSource.routineId) {
         next = markRoutineDone(next, playerSource.routineId);
       }
-      if (selectedAudio.id === "onda-tesla-principal") {
-        next = markRoutineDone(next, "principal");
+      if (selectedAudio.id === "receita-banana-principal") {
+        next = markRoutineDone(next, "receita");
       }
-      if (playerSource.kind === "emergency" && playerSource.reason && emergencyResult) {
-        const emergency: EmergencyUse = {
-          id: `emergency-${Date.now()}`,
-          date: new Date().toISOString(),
-          reason: playerSource.reason,
-          audioId: selectedAudio.id,
-          audioName: selectedAudio.name,
-          result: emergencyResult
-        };
-        next = { ...next, emergencyUses: [...next.emergencyUses, emergency] };
-      }
+      return next;
+    });
+  }
+
+  function saveDailyCheckIn(checkIn: CheckInInput) {
+    const recipe = audioLibrary[0];
+    setSelectedAudio(recipe);
+    setPlayerSource({ kind: "main" });
+    setAppState((current) => {
+      let next = addCompletedSession(current, recipe, checkIn);
+      next = markRoutineDone(next, "checkin");
+      if (checkIn.madeRecipe) next = markRoutineDone(next, "receita");
       return next;
     });
   }
 
   function resetAllData() {
     setAppState({ ...defaultState, journeyStartDate: todayKey() });
-    localStorage.removeItem("ondaTeslaAppState");
+    localStorage.removeItem("bananaAppState");
+  }
+
+  function logout() {
+    clearAuthSession();
+    setAuthSession(null);
+    setSettingsOpen(false);
+  }
+
+  if (!authSession) {
+    return <LoginScreen onAuthenticated={setAuthSession} />;
+  }
+
+  if (!hasOnboarding) {
+    return (
+      <main className="app-shell">
+        <div className="status-glow" />
+        <OnboardingFlow onComplete={completeOnboarding} />
+      </main>
+    );
   }
 
   return (
     <main className="app-shell">
       <div className="status-glow" />
-      {!hasOnboarding ? <OnboardingFlow onComplete={completeOnboarding} onSkip={skipOnboarding} /> : null}
       <HomeScreen {...context} active={activeScreen === "home"} />
       <PlayerScreen
         active={activeScreen === "player"}
         audio={selectedAudio}
+        journeyStartDate={appState.journeyStartDate}
         source={playerSource}
         onComplete={completeAudio}
       />
       <EmergencyScreen
         active={activeScreen === "emergency"}
-        emergencyUses={appState.emergencyUses}
-        openAudio={openAudio}
+        state={appState}
+        onSaveCheckIn={saveDailyCheckIn}
       />
       <ProgressScreen active={activeScreen === "progress"} state={appState} />
       <GuideScreen
@@ -129,10 +150,12 @@ export function App() {
         openSettings={() => setSettingsOpen(true)}
       />
       <SettingsSheet
+        authSession={authSession}
         open={settingsOpen}
         state={appState}
         setState={setAppState}
         onClose={() => setSettingsOpen(false)}
+        onLogout={logout}
         onResetAll={resetAllData}
       />
       <BottomNav activeScreen={activeScreen} openScreen={openScreen} />
