@@ -9,3 +9,9 @@ preview-current-*.png
 preview-*.png
 
 vinciule-meu-projeto-mcp-do-stitch/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
