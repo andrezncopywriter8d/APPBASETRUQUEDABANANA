@@ -90,12 +90,12 @@ export async function registerWithPassword(name: string, email: string, password
 export async function loginWithGoogleCredential(credential: string): Promise<AuthResult> {
   const profile = decodeGoogleCredential(credential);
   if (!profile?.email || !profile.sub) {
-    return { ok: false, message: "No pudimos validar tu cuenta de Google." };
+    return { ok: false, message: "Não conseguimos validar sua conta Google." };
   }
 
   const normalized = normalizeEmail(profile.email);
   if (!isValidEmail(normalized)) {
-    return { ok: false, message: "Google no devolvio un correo valido." };
+    return { ok: false, message: "O Google não devolveu um e-mail válido." };
   }
 
   const db = loadDb();
@@ -128,7 +128,7 @@ export async function loginWithGoogleCredential(credential: string): Promise<Aut
   saveDb({ users });
   const session = makeSession(user);
   saveAuthSession(session);
-  return { ok: true, message: "Sesion iniciada con Google.", session };
+  return { ok: true, message: "Sessão iniciada com Google.", session };
 }
 
 export function exportAuthDb() {

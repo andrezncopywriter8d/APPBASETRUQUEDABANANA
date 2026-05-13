@@ -8,6 +8,7 @@ import { OnboardingFlow } from "./components/OnboardingFlow";
 import { PlayerScreen } from "./components/PlayerScreen";
 import { ProgressScreen } from "./components/ProgressScreen";
 import { SettingsSheet } from "./components/SettingsSheet";
+import { SupportScreen } from "./components/SupportScreen";
 import { audioLibrary, type ProtocolAudio, type ScreenId } from "./data/protocolData";
 import {
   addCompletedSession,
@@ -141,6 +142,7 @@ export function App() {
         state={appState}
         onSaveCheckIn={saveDailyCheckIn}
       />
+      <SupportScreen active={activeScreen === "support"} state={appState} />
       <ProgressScreen active={activeScreen === "progress"} state={appState} />
       <GuideScreen
         active={activeScreen === "guide"}

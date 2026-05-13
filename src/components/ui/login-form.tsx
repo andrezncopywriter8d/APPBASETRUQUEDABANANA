@@ -229,9 +229,6 @@ export function LoginForm({
         </button>
       </form>
       <div className="login-divider"><span />OU CONTINUE COM<span /></div>
-      <button className="google-login" type="button" disabled title="Disponible al conectar Google OAuth">
-        <GoogleIcon /> Google em breve
-      </button>
       <GoogleSignIn clientId={googleClientId} onCredential={onGoogleCredential} onError={onGoogleError} />
       <p className="login-switch">
         {isRegister ? "Já tem conta?" : "Não tem conta?"}{" "}
@@ -251,11 +248,14 @@ interface GoogleSignInProps {
 
 function GoogleSignIn({ clientId, onCredential, onError }: GoogleSignInProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!clientId) return;
     let cancelled = false;
+    setFailed(false);
+    setReady(false);
     loadGoogleIdentityScript()
       .then(() => {
         if (cancelled || !window.google || !buttonRef.current) return;
@@ -263,7 +263,7 @@ function GoogleSignIn({ clientId, onCredential, onError }: GoogleSignInProps) {
           client_id: clientId,
           callback: (response) => {
             if (!response.credential) {
-              onError?.("Google no devolvio una credencial valida.");
+              onError?.("O Google não devolveu uma credencial válida.");
               return;
             }
             onCredential?.(response.credential);
@@ -281,7 +281,9 @@ function GoogleSignIn({ clientId, onCredential, onError }: GoogleSignInProps) {
         });
         setReady(true);
       })
-      .catch(() => onError?.("No pudimos cargar el acceso con Google."));
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -291,7 +293,16 @@ function GoogleSignIn({ clientId, onCredential, onError }: GoogleSignInProps) {
     return (
       <div className="google-config-warning">
         <GoogleIcon />
-        <span>Configura VITE_GOOGLE_CLIENT_ID para activar Google.</span>
+        <span>Configure VITE_GOOGLE_CLIENT_ID para ativar o Google.</span>
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="google-config-warning">
+        <GoogleIcon />
+        <span>Não foi possível carregar o Google agora. Recarregue a página e tente novamente.</span>
       </div>
     );
   }
@@ -299,7 +310,7 @@ function GoogleSignIn({ clientId, onCredential, onError }: GoogleSignInProps) {
   return (
     <div className="google-slot" aria-busy={!ready}>
       <div ref={buttonRef} />
-      {!ready ? <span>Cargando Google...</span> : null}
+      {!ready ? <span>Carregando Google...</span> : null}
     </div>
   );
 }

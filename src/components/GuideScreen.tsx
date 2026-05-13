@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { CheckCircle2, Clock, Coffee, Gift, HelpCircle, ListChecks, PlayCircle, Settings, ShieldCheck, ShoppingBag, Star } from "lucide-react";
 import { guideModules, helpOptions, upsells, type ProtocolAudio } from "../data/protocolData";
@@ -8,7 +8,7 @@ interface GuideScreenProps {
   readonly active: boolean;
   readonly state: OndaTeslaState;
   readonly setState: Dispatch<SetStateAction<OndaTeslaState>>;
-  readonly openAudio: (audio: ProtocolAudio, source?: { kind: "library" }) => void;
+  readonly openAudio: (audio: ProtocolAudio, source: { kind: "library" }) => void;
   readonly openSettings: () => void;
 }
 
@@ -105,9 +105,12 @@ export function GuideScreen({ active, state, setState, openSettings }: GuideScre
           {module ? (
             <>
               <div className="protocol-modal-head"><div><h3>{module.title}</h3><p>{module.description}</p></div></div>
-              {module.id === "cha" ? <JapaneseTeaBonus /> : <div className="guide-detail">{module.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>}
+              {module.id === "cha" ? <JapaneseTeaBonus /> : null}
+              {module.id === "sanfona" ? <AntiSanfonaBonus /> : null}
+              {module.id === "movimento" ? <MovementBonus /> : null}
+              {!["cha", "sanfona", "movimento"].includes(module.id) ? <div className="guide-detail">{module.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div> : null}
               <button className="protocol-primary full" type="button" onClick={() => markRead(module.id)}>
-                {module.id === "cha" ? "Concluir bônus" : "Marcar como acessado"}
+                {["cha", "sanfona", "movimento"].includes(module.id) ? "Concluir bônus" : "Marcar como acessado"}
               </button>
               <button className="protocol-secondary full" type="button" onClick={() => setSelectedModule(null)}>Voltar</button>
             </>
@@ -118,84 +121,57 @@ export function GuideScreen({ active, state, setState, openSettings }: GuideScre
   );
 }
 
-function JapaneseTeaBonus() {
-  const ingredients = [
-    ["Chá preto", "Ajuda a dar energia e pode apoiar o metabolismo. Como contém cafeína, prefira usar durante o dia ou no fim da tarde."],
-    ["Hibisco", "Ajuda na sensação de desinchaço e pode apoiar uma rotina alimentar mais leve."],
-    ["Cravo-da-índia", "Deixa o chá mais aromático e pode apoiar a digestão."],
-    ["Canela", "Ajuda a reduzir a vontade de doce e deixa o sabor mais agradável."],
-    ["Alecrim", "Deixa a bebida mais refrescante e combina com uma rotina leve."]
+function AntiSanfonaBonus() {
+  const pillars = [
+    ["Ritual mínimo", "Nos dias corridos, mantenha apenas o básico: receita, água e check-in. Isso evita que um dia ruim vire uma semana perdida."],
+    ["Peso não é o único sinal", "Acompanhe também cintura, inchaço, disposição, beliscos e constância. Esses sinais aparecem antes da balança em muitas rotinas."],
+    ["Plano de retorno", "Se sair do plano, volte na próxima refeição. Não espere segunda-feira, novo mês ou motivação perfeita."],
+    ["Ambiente preparado", "Deixe banana, canela, chia ou linhaça e água visíveis. O que fica fácil tende a ser repetido."]
   ];
 
-  const recipe = [
-    "500 ml de água quente",
-    "1 sachê de chá preto ou 1 colher de chá de chá preto",
-    "1 colher de sopa rasa de hibisco",
-    "3 a 5 cravos-da-índia",
-    "1 pedaço pequeno de canela em pau ou 1 pitada de canela em pó",
-    "1 raminho pequeno de alecrim"
+  const restartPlan = [
+    "Volte para o Dia 1 por 24 horas: receita simples + água + check-in.",
+    "Não tente compensar com restrição pesada. Isso aumenta fome e beliscos.",
+    "Escolha um horário fixo para a receita nos próximos 3 dias.",
+    "Anote o principal gatilho: doce, ansiedade, falta de tempo, sono ruim ou evento social.",
+    "Use o app para registrar a retomada, mesmo que o dia não tenha sido perfeito."
   ];
 
-  const preparation = [
-    "Aqueça a água até ficar bem quente, sem precisar ferver demais.",
-    "Coloque o chá preto, o hibisco, o cravo, a canela e o alecrim em uma xícara grande ou jarra.",
-    "Despeje a água quente por cima.",
-    "Tampe e deixe descansar por aproximadamente 10 a 15 minutos.",
-    "Depois, coe o chá.",
-    "Tome morno ou coloque na geladeira para tomar gelado ao longo do dia."
-  ];
-
-  const nightRecipe = [
-    "300 ml de água quente",
-    "1 colher de sopa rasa de hibisco",
-    "3 cravos-da-índia",
-    "1 pedaço pequeno de canela",
-    "1 raminho pequeno de alecrim"
-  ];
-
-  const checklist = [
-    "Assisti à videoaula.",
-    "Preparei o Chá Japonês.",
-    "Tomei sem açúcar.",
-    "Evitei beliscar depois do chá.",
-    "Fiz o check-in da minha sensação."
+  const weekPlan = [
+    ["Segunda", "Organizar ingredientes e fazer a receita no horário combinado."],
+    ["Terça", "Repetir a receita e bater a meta mínima de água."],
+    ["Quarta", "Registrar cintura ou sensação de inchaço."],
+    ["Quinta", "Escolher um jantar mais leve e evitar belisco automático."],
+    ["Sexta", "Fazer check-in honesto, sem culpa."],
+    ["Sábado", "Manter o plano mínimo se tiver compromisso."],
+    ["Domingo", "Revisar a semana e preparar a próxima lista de compras."]
   ];
 
   return (
     <div className="bonus-lesson">
-      <div className="bonus-video">
-        <iframe
-          title="Aula rápida do Chá Noturno Japonês"
-          src="https://www.youtube.com/embed/iYwSL-LXIdE"
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      </div>
-
       <div className="bonus-meta">
-        <span><Clock size={15} /> Conteúdo: 2 min</span>
-        <span><PlayCircle size={15} /> Aula rápida</span>
+        <span><Clock size={15} /> Conteúdo: 8 min</span>
+        <span><ListChecks size={15} /> Guia prático</span>
       </div>
 
       <section className="bonus-callout">
-        <Coffee size={20} />
+        <ShieldCheck size={20} />
         <div>
-          <strong>Rotina leve para fechar o dia</strong>
-          <p>O Chá Noturno Japonês ajuda a desacelerar, reduzir beliscos e deixar sua noite mais organizada.</p>
+          <strong>O segredo é ter um plano para os dias imperfeitos</strong>
+          <p>O efeito sanfona costuma aparecer quando a pessoa alterna entre tudo ou nada. Aqui, a regra é diferente: você aprende a voltar rápido para o básico.</p>
         </div>
       </section>
 
       <section className="bonus-section">
-        <h4>Como ele entra no seu plano</h4>
-        <p>Ele funciona melhor junto com sua Receita da Banana Bariátrica, água, menos exageros à noite e check-in diário. Não é milagre: é uma rotina simples repetida com consistência.</p>
+        <h4>O que fazer depois dos 21 dias</h4>
+        <p>Depois do ciclo inicial, não abandone tudo. Mantenha uma versão simples do ritual: receita em dias alternados, água acompanhada, check-in 3 vezes por semana e uma revisão rápida no domingo.</p>
+        <p>O objetivo não é viver presa ao app. É usar o app como trilho até sua rotina ficar automática.</p>
       </section>
 
       <section className="bonus-section">
-        <h4>Ingredientes da receita</h4>
+        <h4>4 pilares anti-sanfona</h4>
         <div className="bonus-ingredient-list">
-          {ingredients.map(([title, text]) => (
+          {pillars.map(([title, text]) => (
             <article key={title}>
               <strong>{title}</strong>
               <p>{text}</p>
@@ -205,48 +181,254 @@ function JapaneseTeaBonus() {
       </section>
 
       <section className="bonus-recipe-card">
-        <h4>Receita prática do Chá Japonês</h4>
+        <h4>Plano de retorno em 24 horas</h4>
+        <ol>{restartPlan.map((item) => <li key={item}>{item}</li>)}</ol>
+      </section>
+
+      <section className="bonus-section">
+        <h4>Semana de manutenção simples</h4>
+        <div className="bonus-challenge">
+          {weekPlan.map(([day, task]) => (
+            <span key={day}><strong>{day}</strong> {task}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="bonus-callout soft">
+        <ListChecks size={20} />
+        <div>
+          <strong>Regra da próxima escolha</strong>
+          <p>Se você exagerou, não precisa “pagar” com culpa. A próxima escolha já pode ser melhor: água, receita, caminhada leve ou check-in. É assim que a sequência volta.</p>
+        </div>
+      </section>
+
+      <section className="bonus-finish">
+        <strong>Seu plano não acaba no Dia 21.</strong>
+        <p>Ele vira uma rotina menor, mais fácil de repetir. A manutenção começa quando você para de recomeçar do zero e aprende a voltar para o próximo passo.</p>
+      </section>
+    </div>
+  );
+}
+
+function MovementBonus() {
+  const warmup = [
+    "30 segundos marchando sem sair do lugar.",
+    "30 segundos girando ombros para trás.",
+    "30 segundos abrindo e fechando os braços.",
+    "30 segundos respirando fundo e soltando o ar devagar."
+  ];
+
+  const circuit = [
+    ["Sentar e levantar da cadeira", "8 a 12 repetições, usando apoio se precisar."],
+    ["Elevação de panturrilha", "10 repetições, segurando em uma parede ou cadeira."],
+    ["Remada com toalha", "10 puxadas leves, mantendo ombros relaxados."],
+    ["Passo lateral", "30 segundos para um lado e para o outro."],
+    ["Alongamento final", "Respire por 40 segundos, soltando pescoço e ombros."]
+  ];
+
+  const levels = [
+    ["Dia corrido", "Faça só 3 minutos: marcha, cadeira e respiração."],
+    ["Dia normal", "Faça a rotina completa de 5 a 7 minutos."],
+    ["Dia animado", "Repita o circuito 2 vezes, sem transformar em obrigação pesada."]
+  ];
+
+  return (
+    <div className="bonus-lesson">
+      <div className="bonus-meta">
+        <span><Clock size={15} /> Conteúdo: 7 min</span>
+        <span><PlayCircle size={15} /> Rotina guiada</span>
+      </div>
+
+      <section className="bonus-callout">
+        <HeartIcon />
+        <div>
+          <strong>Movimento para destravar, não para se punir</strong>
+          <p>Essa rotina foi pensada para mulheres que querem começar em casa, sem equipamento e sem cobrança. A meta é repetir, não sofrer.</p>
+        </div>
+      </section>
+
+      <section className="bonus-section">
+        <h4>Antes de começar</h4>
+        <p>Use roupa confortável, deixe água por perto e escolha um espaço seguro. Se sentir dor, tontura, falta de ar forte ou desconforto diferente, pare e procure orientação profissional.</p>
+      </section>
+
+      <section className="bonus-recipe-card">
+        <h4>Aquecimento de 2 minutos</h4>
+        <ol>{warmup.map((item) => <li key={item}>{item}</li>)}</ol>
+      </section>
+
+      <section className="bonus-section">
+        <h4>Circuito leve de 5 minutos</h4>
+        <div className="bonus-ingredient-list">
+          {circuit.map(([title, text]) => (
+            <article key={title}>
+              <strong>{title}</strong>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="bonus-section">
+        <h4>Escolha seu nível do dia</h4>
+        <div className="bonus-challenge">
+          {levels.map(([title, text]) => (
+            <span key={title}><strong>{title}</strong> {text}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="bonus-callout soft">
+        <ListChecks size={20} />
+        <div>
+          <strong>Como encaixar no Banana App</strong>
+          <p>Faça o movimento depois da receita ou no horário em que costuma beliscar. Depois registre no check-in se sua disposição, fome ou vontade de doce mudou.</p>
+        </div>
+      </section>
+
+      <section className="bonus-finish">
+        <strong>Microvitória concluída.</strong>
+        <p>Se você fez poucos minutos, já conta. O corpo aprende pela repetição. Amanhã, repita a versão possível.</p>
+      </section>
+    </div>
+  );
+}
+
+function HeartIcon() {
+  return <span aria-hidden="true" style={{ display: "grid", placeItems: "center", color: "#2f7d32", fontSize: "1.25rem" }}>♡</span>;
+}
+
+function JapaneseTeaBonus() {
+  const ingredients = [
+    ["Ch\u00e1 preto", "Ajuda a dar energia e pode apoiar o metabolismo. Como cont\u00e9m cafe\u00edna, prefira usar durante o dia ou no fim da tarde."],
+    ["Hibisco", "Ajuda na sensa\u00e7\u00e3o de desincha\u00e7o e pode apoiar uma rotina alimentar mais leve."],
+    ["Cravo-da-\u00edndia", "Deixa o ch\u00e1 mais arom\u00e1tico e pode apoiar a digest\u00e3o."],
+    ["Canela", "Ajuda a reduzir a vontade de doce e deixa o sabor mais agrad\u00e1vel."],
+    ["Alecrim", "Deixa a bebida mais refrescante e combina com uma rotina leve."]
+  ];
+
+  const recipe = [
+    "500 ml de \u00e1gua quente",
+    "1 sach\u00ea de ch\u00e1 preto ou 1 colher de ch\u00e1 de ch\u00e1 preto",
+    "1 colher de sopa rasa de hibisco",
+    "3 a 5 cravos-da-\u00edndia",
+    "1 peda\u00e7o pequeno de canela em pau ou 1 pitada de canela em p\u00f3",
+    "1 raminho pequeno de alecrim"
+  ];
+
+  const preparation = [
+    "Aque\u00e7a a \u00e1gua at\u00e9 ficar bem quente, sem precisar ferver demais.",
+    "Coloque o ch\u00e1 preto, o hibisco, o cravo, a canela e o alecrim em uma x\u00edcara grande ou jarra.",
+    "Despeje a \u00e1gua quente por cima.",
+    "Tampe e deixe descansar por aproximadamente 10 a 15 minutos.",
+    "Depois, coe o ch\u00e1.",
+    "Tome morno ou coloque na geladeira para tomar gelado ao longo do dia."
+  ];
+
+  const nightRecipe = [
+    "300 ml de \u00e1gua quente",
+    "1 colher de sopa rasa de hibisco",
+    "3 cravos-da-\u00edndia",
+    "1 peda\u00e7o pequeno de canela",
+    "1 raminho pequeno de alecrim"
+  ];
+
+  const checklist = [
+    "Assisti \u00e0 videoaula.",
+    "Preparei o Ch\u00e1 Japon\u00eas.",
+    "Tomei sem a\u00e7\u00facar.",
+    "Evitei beliscar depois do ch\u00e1.",
+    "Fiz o check-in da minha sensa\u00e7\u00e3o."
+  ];
+
+  return (
+    <div className="bonus-lesson">
+      <div className="bonus-video">
+        <iframe
+          src="https://www.youtube.com/embed/iYwSL-LXIdE?rel=0&modestbranding=1&playsinline=1"
+          title="Videoaula Chá Noturno Japonês"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+      <a className="bonus-video-help" href="https://www.youtube.com/watch?v=iYwSL-LXIdE" target="_blank" rel="noreferrer">
+        {"Se o vídeo não carregar aqui, abrir no YouTube"}
+      </a>
+
+      <div className="bonus-meta">
+        <span><Clock size={15} /> {"Conte\u00fado: 2 min"}</span>
+        <span><PlayCircle size={15} /> {"Aula r\u00e1pida"}</span>
+      </div>
+
+      <section className="bonus-callout">
+        <Coffee size={20} />
+        <div>
+          <strong>{"Rotina leve para fechar o dia"}</strong>
+          <p>{"O Ch\u00e1 Noturno Japon\u00eas ajuda a desacelerar, reduzir beliscos e deixar sua noite mais organizada."}</p>
+        </div>
+      </section>
+
+      <section className="bonus-section">
+        <h4>{"Como ele entra no seu plano"}</h4>
+        <p>{"Ele funciona melhor junto com sua Receita da Banana Bari\u00e1trica, \u00e1gua, menos exageros \u00e0 noite e check-in di\u00e1rio. N\u00e3o \u00e9 milagre: \u00e9 uma rotina simples repetida com consist\u00eancia."}</p>
+      </section>
+
+      <section className="bonus-section">
+        <h4>{"Ingredientes da receita"}</h4>
+        <div className="bonus-ingredient-list">
+          {ingredients.map(([title, itemText]) => (
+            <article key={title}>
+              <strong>{title}</strong>
+              <p>{itemText}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="bonus-recipe-card">
+        <h4>{"Receita pr\u00e1tica do Ch\u00e1 Japon\u00eas"}</h4>
         <ul>{recipe.map((item) => <li key={item}>{item}</li>)}</ul>
       </section>
 
       <section className="bonus-section">
-        <h4>Modo de preparo</h4>
+        <h4>{"Modo de preparo"}</h4>
         <ol>{preparation.map((item) => <li key={item}>{item}</li>)}</ol>
       </section>
 
       <section className="bonus-section">
-        <h4>Como consumir</h4>
-        <p>Tome 1 copo antes do almoço, antes do jantar ou no período da tarde. Evite adoçar com açúcar. Se precisar muito adoçar, use pequena quantidade de stevia ou xilitol.</p>
-        <p>Evite tomar muito tarde se você tiver dificuldade para dormir, porque o chá preto contém cafeína.</p>
+        <h4>{"Como consumir"}</h4>
+        <p>{"Tome 1 copo antes do almo\u00e7o, antes do jantar ou no per\u00edodo da tarde. Evite ado\u00e7ar com a\u00e7\u00facar. Se precisar muito ado\u00e7ar, use pequena quantidade de stevia ou xilitol."}</p>
+        <p>{"Evite tomar muito tarde se voc\u00ea tiver dificuldade para dormir, porque o ch\u00e1 preto cont\u00e9m cafe\u00edna."}</p>
       </section>
 
       <section className="bonus-recipe-card night">
-        <h4>Versão noturna sem cafeína</h4>
-        <p>Para usar depois do jantar, remova o chá preto e mantenha uma versão mais leve para fechar a cozinha.</p>
+        <h4>{"Vers\u00e3o noturna sem cafe\u00edna"}</h4>
+        <p>{"Para usar depois do jantar, remova o ch\u00e1 preto e mantenha uma vers\u00e3o mais leve para fechar a cozinha."}</p>
         <ul>{nightRecipe.map((item) => <li key={item}>{item}</li>)}</ul>
       </section>
 
       <section className="bonus-callout soft">
         <ListChecks size={20} />
         <div>
-          <strong>Ritual da cozinha fechada</strong>
-          <p>Depois do chá, repita: “Por hoje, minha cozinha está fechada. Se bater vontade de comer doce, vou esperar 10 minutos antes de decidir.”</p>
-          <p>Antes de beliscar, pergunte: estou com fome de verdade ou é ansiedade, costume ou vontade de doce?</p>
+          <strong>{"Ritual da cozinha fechada"}</strong>
+          <p>{"Depois do ch\u00e1, repita: \"Por hoje, minha cozinha est\u00e1 fechada. Se bater vontade de comer doce, vou esperar 10 minutos antes de decidir.\""}</p>
+          <p>{"Antes de beliscar, pergunte: estou com fome de verdade ou \u00e9 ansiedade, costume ou vontade de doce?"}</p>
         </div>
       </section>
 
       <section className="bonus-section">
-        <h4>Desafio de 3 dias</h4>
+        <h4>{"Desafio de 3 dias"}</h4>
         <div className="bonus-challenge">
-          <span><strong>Dia 1</strong> tomar o chá sem açúcar.</span>
-          <span><strong>Dia 2</strong> tomar o chá e não beliscar depois.</span>
-          <span><strong>Dia 3</strong> tomar o chá e registrar sua sensação no check-in.</span>
+          <span><strong>{"Dia 1"}</strong> {"tomar o ch\u00e1 sem a\u00e7\u00facar."}</span>
+          <span><strong>{"Dia 2"}</strong> {"tomar o ch\u00e1 e n\u00e3o beliscar depois."}</span>
+          <span><strong>{"Dia 3"}</strong> {"tomar o ch\u00e1 e registrar sua sensa\u00e7\u00e3o no check-in."}</span>
         </div>
-        <p>Ao final, observe se a barriga parece menos pesada, se você beliscou menos à noite e se dormir ficou mais fácil ou mais difícil.</p>
+        <p>{"Ao final, observe se a barriga parece menos pesada, se voc\u00ea beliscou menos \u00e0 noite e se dormir ficou mais f\u00e1cil ou mais dif\u00edcil."}</p>
       </section>
 
       <section className="bonus-section">
-        <h4>Checklist do bônus</h4>
+        <h4>{"Checklist do b\u00f4nus"}</h4>
         <div className="bonus-checklist">
           {checklist.map((item) => (
             <span key={item}><CheckCircle2 size={16} /> {item}</span>
@@ -255,17 +437,17 @@ function JapaneseTeaBonus() {
       </section>
 
       <section className="bonus-finish">
-        <strong>Parabéns. Você concluiu o Chá Noturno Japonês.</strong>
-        <p>Agora você tem uma rotina simples para deixar sua noite mais leve, reduzir beliscos e continuar firme no seu plano. O resultado vem da repetição: faça hoje, repita amanhã e acompanhe sua evolução no check-in.</p>
+        <strong>{"Parab\u00e9ns. Voc\u00ea concluiu o Ch\u00e1 Noturno Japon\u00eas."}</strong>
+        <p>{"Agora voc\u00ea tem uma rotina simples para deixar sua noite mais leve, reduzir beliscos e continuar firme no seu plano. O resultado vem da repeti\u00e7\u00e3o: fa\u00e7a hoje, repita amanh\u00e3 e acompanhe sua evolu\u00e7\u00e3o no check-in."}</p>
       </section>
     </div>
   );
 }
 
 function helpCopy(option: string) {
-  if (option.includes("resultado")) return "Cada corpo responde em ritmo diferente. Veja também inchaço, água, cintura, disposição e constância.";
-  if (option.includes("constância")) return "Ative lembrete e use o plano mínimo: receita + check-in.";
-  if (option.includes("garantia")) return "Explicação clara, sem esconder informação. Fale com suporte se precisar.";
-  if (option.includes("receita")) return "Abra a receita do dia, veja passo a passo e use a solução se não conseguiu fazer.";
+  if (option.includes("resultado")) return "Cada corpo responde em ritmo diferente. Veja tambÃ©m inchaÃ§o, Ã¡gua, cintura, disposiÃ§Ã£o e constÃ¢ncia.";
+  if (option.includes("constÃ¢ncia")) return "Ative lembrete e use o plano mÃ­nimo: receita + check-in.";
+  if (option.includes("garantia")) return "ExplicaÃ§Ã£o clara, sem esconder informaÃ§Ã£o. Fale com suporte se precisar.";
+  if (option.includes("receita")) return "Abra a receita do dia, veja passo a passo e use a soluÃ§Ã£o se nÃ£o conseguiu fazer.";
   return "Veja o passo a passo e fale com suporte se ainda precisar de ajuda.";
 }
